@@ -139,7 +139,7 @@ All skills in this repository are licensed under [GPL-2.0-or-later](LICENSE), sa
 
 ## Author
 
-Created and maintained by [Fernando Tellado](https://github.com/fernandotellado) / [AyudaWP](https://ayudawp.com)
+Created and maintained by [Fernando Tellado](https://github.com/fernandotellado) / [Ayuda WordPress](https://ayudawp.com)
 
 ## Credits
 
