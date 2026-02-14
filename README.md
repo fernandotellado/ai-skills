@@ -46,7 +46,27 @@ Comprehensive security guidelines for WordPress plugin development covering sani
 
 ---
 
-*More skills coming soon: Interactivity API, Block Development, Block Themes, REST API, Performance Optimization, and more.*
+#### [WordPress Plugin Performance](skills/wp-plugin-performance.md)
+Comprehensive performance guidelines for WordPress plugin development covering database optimization, object caching, transients, conditional asset loading, efficient hooks, HTTP requests, WP-Cron, AJAX/REST optimization, and common anti-patterns. Based on official WordPress Developer Resources and WP VIP documentation.
+
+**Key topics:**
+- Database query optimization (WP_Query, $wpdb)
+- Options and autoload management
+- Object cache implementation
+- Transients best practices
+- Conditional asset loading
+- Efficient hook usage
+- External HTTP requests
+- WP-Cron configuration
+- AJAX and REST API optimization
+- Anti-patterns detection and fixes
+- Measurement and profiling
+
+**Compatibility:** WordPress 6.0+ / PHP 7.4+
+
+---
+
+*More skills coming soon: Interactivity API, Block Development, Block Themes, REST API, and more.*
 
 ## How to Use These Skills
 
@@ -82,6 +102,7 @@ All skills are written in clear markdown and serve as excellent reference docume
 ## Skill Format
 
 All skills follow the agentskills.io standard format with:
+
 ```yaml
 ---
 name: skill-name
@@ -139,7 +160,7 @@ All skills in this repository are licensed under [GPL-2.0-or-later](LICENSE), sa
 
 ## Author
 
-Created and maintained by [Fernando Tellado](https://github.com/fernandotellado) / [Ayuda WordPress](https://ayudawp.com)
+Created and maintained by [Fernando Tellado](https://github.com/fernandotellado) / [AyudaWP](https://ayudawp.com)
 
 ## Credits
 
@@ -147,6 +168,7 @@ Skills are based on:
 
 - Official WordPress Developer Resources
 - WordPress Coding Standards
+- WordPress VIP Documentation
 - Real-world professional development experience
 - Community feedback and contributions
 
