@@ -110,7 +110,7 @@ description: "Brief description"
 compatibility: "Version/platform requirements"
 license: GPL-2.0-or-later
 metadata:
-  author: ayudawp
+  author: fernando-tellado
   version: "1.0"
 ---
 ```
