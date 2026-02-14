@@ -4,7 +4,7 @@ description: "Security guidelines for WordPress plugin development: sanitization
 compatibility: "WordPress 6.0+ / PHP 7.4+. Applies to plugins, themes, and custom code."
 license: GPL-2.0-or-later
 metadata:
-  author: ayudawp
+  author: fernando-tellado
   version: "1.0"
 ---
 
