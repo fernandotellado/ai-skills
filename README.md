@@ -66,6 +66,29 @@ Comprehensive performance guidelines for WordPress plugin development covering d
 
 ---
 
+#### [WordPress Plugin Development](skills/wp-plugin-development.md)
+Comprehensive architecture and development guidelines for WordPress plugins published on wordpress.org, covering file structure, plugin header, lifecycle hooks, Settings API, admin UI, custom post types, custom database tables, internationalization, plugin dependencies, and submission requirements. Based on the official WordPress Plugin Developer Handbook and Plugin Review Team guidelines.
+
+**Key topics:**
+- Plugin file structure and main file bootstrap
+- Plugin header requirements for wordpress.org
+- Lifecycle hooks (activation, deactivation, uninstall)
+- Main plugin class with singleton pattern
+- Actions and filters system
+- Settings API: sections, fields, sanitization
+- Admin menu and settings page
+- Custom post types and taxonomies
+- Custom database tables with dbDelta
+- Internationalization and translation readiness
+- Plugin dependencies management
+- wordpress.org submission requirements and common rejection reasons
+- readme.txt structure and rules
+- Debugging tools and best practices
+
+**Compatibility:** WordPress 6.0+ / PHP 7.4+
+
+---
+
 *More skills coming soon: Interactivity API, Block Development, Block Themes, REST API, and more.*
 
 ## How to Use These Skills
@@ -110,7 +133,7 @@ description: "Brief description"
 compatibility: "Version/platform requirements"
 license: GPL-2.0-or-later
 metadata:
-  author: fernando-tellado
+  author: ayudawp
   version: "1.0"
 ---
 ```
