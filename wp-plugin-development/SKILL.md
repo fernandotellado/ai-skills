@@ -45,6 +45,22 @@ Leave no trace when disabled
 5. **GPL compatibility**: All code and bundled libraries must be GPL-compatible for wordpress.org
 6. **No inline assets**: Never print <script> or <style> tags directly with PHP — always use wp_enqueue_script() and wp_enqueue_style() with external files
 
+### Prefixing rules
+
+All functions, classes, constants, hooks, options, post types, taxonomy slugs, and script/style handles must use a unique prefix of **at least 4 characters**. The Plugin Review Team rejects plugins with short or generic prefixes.
+
+| Element | Correct | Wrong |
+|---------|---------|-------|
+| Function | `ayudawp_get_settings()` | `wp_get_settings()`, `get_settings()` |
+| Class | `AyudaWP_Settings` | `Settings`, `WP_Settings` |
+| Constant | `AYUDAWP_VERSION` | `VERSION`, `MY_VERSION` |
+| Option | `ayudawp_settings` | `settings`, `my_settings` |
+| Post type | `ayudawp_event` | `event`, `my_event` |
+| Hook | `ayudawp_after_save` | `after_save` |
+| Script handle | `ayudawp-admin` | `admin-script` |
+
+Do not use `wp_`, `wordpress_`, or `wc_` as prefixes — these are reserved by WordPress core and WooCommerce.
+
 ## Plugin file structure
 
 A well-organized plugin is easier to review, maintain, and extend.
