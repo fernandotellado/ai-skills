@@ -156,6 +156,52 @@ register_deactivation_hook( MYPLUGIN_FILE, array( 'My_Plugin', 'deactivate' ) );
 // Kick off.
 My_Plugin::get_instance();
 ```
+### Asset loading rules
+
+WordPress plugins must load all JavaScript and CSS through the enqueue API using external files. Printing `<script>` or `<style>` tags directly in PHP output is forbidden — it bypasses WordPress dependency management, breaks Content Security Policy headers, prevents caching and deduplication, and is flagged by the Plugin Review Team.
+
+```php
+// WRONG: Inline script printed with PHP
+add_action( 'wp_head', 'myplugin_bad_inline_script' );
+function myplugin_bad_inline_script() {
+    echo '<script>var config = { api: "https://example.com" };</script>';
+}
+
+// WRONG: Inline style printed with PHP
+add_action( 'wp_head', 'myplugin_bad_inline_style' );
+function myplugin_bad_inline_style() {
+    echo '<style>.my-widget { color: red; }</style>';
+}
+
+// CORRECT: External JS file with data passed via wp_localize_script
+wp_enqueue_script(
+    'myplugin-frontend',
+    MYPLUGIN_URL . 'assets/js/frontend.js',
+    array(),
+    MYPLUGIN_VERSION,
+    true
+);
+wp_localize_script( 'myplugin-frontend', 'mypluginConfig', array(
+    'api' => 'https://example.com',
+) );
+
+// CORRECT: External CSS file
+wp_enqueue_style(
+    'myplugin-frontend',
+    MYPLUGIN_URL . 'assets/css/frontend.css',
+    array(),
+    MYPLUGIN_VERSION
+);
+
+// CORRECT: Small dynamic CSS via wp_add_inline_style (requires a registered stylesheet)
+$custom_color = sanitize_hex_color( get_option( 'myplugin_color', '#333' ) );
+wp_add_inline_style( 'myplugin-frontend', ".myplugin-widget { color: {$custom_color}; }" );
+
+// CORRECT: Small dynamic JS via wp_add_inline_script (requires a registered script)
+wp_add_inline_script( 'myplugin-frontend', 'console.log("loaded");', 'after' );
+```
+
+The only acceptable way to add small amounts of dynamic CSS or JS is through `wp_add_inline_style()` and `wp_add_inline_script()`, which attach the code to a properly enqueued handle.
 
 ### Plugin header requirements for wordpress.org
 
