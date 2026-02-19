@@ -1191,6 +1191,7 @@ wp i18n make-pot . languages/my-plugin.pot
 ### Hooks and architecture
 
 - [ ] Unique prefix used for all functions, classes, hooks, and constants
+- [ ] All prefixes are at least 4 characters long and unique
 - [ ] Filters always return a value
 - [ ] No `extract()` usage
 - [ ] No `eval()` usage
