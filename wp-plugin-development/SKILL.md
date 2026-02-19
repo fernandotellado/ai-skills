@@ -1006,6 +1006,8 @@ if ( ! empty( $missing_extensions ) ) {
 | Overwriting WordPress globals | Never modify `$wp_query`, `$wpdb`, etc. globally |
 | `extract()` usage | Forbidden — creates unpredictable variable scope |
 | Generic function/class names | Prefix everything with a unique identifier |
+| Short or generic prefix (under 4 characters) | Use a unique prefix of at least 4 characters for all functions, classes, constants, hooks, and handles |
+| Inline <script> or <style> tags in PHP | Use wp_enqueue_script() / wp_enqueue_style() with external files; use wp_add_inline_script() / wp_add_inline_style() only for small dynamic values |
 
 ### readme.txt structure
 
