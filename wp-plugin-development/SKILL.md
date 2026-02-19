@@ -43,6 +43,7 @@ Leave no trace when disabled
 3. **Lifecycle awareness**: Know what runs on activation, deactivation, and uninstall — and keep them separate
 4. **Settings API**: Never save options by hand; use the Settings API to register, validate, and store settings
 5. **GPL compatibility**: All code and bundled libraries must be GPL-compatible for wordpress.org
+6. **No inline assets**: Never print <script> or <style> tags directly with PHP — always use wp_enqueue_script() and wp_enqueue_style() with external files
 
 ## Plugin file structure
 
