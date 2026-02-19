@@ -81,6 +81,8 @@ Comprehensive architecture and development guidelines for WordPress plugins publ
 - Custom database tables with dbDelta
 - Internationalization and translation readiness
 - Plugin dependencies management
+- Asset loading rules (no inline scripts/styles)
+- Prefixing rules and naming conventions
 - wordpress.org submission requirements and common rejection reasons
 - readme.txt structure and rules
 - Debugging tools and best practices
