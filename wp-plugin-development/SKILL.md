@@ -1206,6 +1206,7 @@ wp i18n make-pot . languages/my-plugin.pot
 - [ ] No Network header in `readme.txt`
 - [ ] All bundled libraries are GPL-compatible
 - [ ] No hardcoded calls to external services on every page load
+- [ ] No inline <script> or <style> tags — all assets use wp_enqueue_* with external files
 - [ ] No shipping of debug code (`var_dump`, `print_r`, `error_reporting()`)
 
 ## References
