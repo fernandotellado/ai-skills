@@ -5,7 +5,7 @@ compatibility: "WordPress 6.0+ / PHP 7.4+. Targets plugins for distribution on w
 license: GPL-2.0-or-later
 metadata:
   author: fernando-tellado
-  version: "1.0"
+  version: "1.1"
 ---
 
 # WordPress plugin development
@@ -87,8 +87,6 @@ my-plugin/
 │   ├── class-my-plugin-cpt.php     # Custom post types / taxonomies
 │   ├── class-my-plugin-db.php      # Custom database tables
 │   └── class-my-plugin-settings.php # Settings API implementation
-└── languages/
-    └── my-plugin.pot               # Translation template
 ```
 
 ### Main plugin file
@@ -109,7 +107,6 @@ The main file is a bootstrap: it defines constants, checks requirements, and loa
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       my-plugin
- * Domain Path:       /languages
  */
 
 // Prevent direct file access.
@@ -215,7 +212,7 @@ The only acceptable way to add small amounts of dynamic CSS or JS is through `wp
 | `Author` | Yes | Your name or company |
 | `License` | Yes | Must be GPL-2.0-or-later or compatible |
 | `Text Domain` | Yes | Must match the plugin folder slug |
-| `Domain Path` | Recommended | `/languages` |
+| `Domain Path` | Deprecated | Do no add this line |
 
 ## Plugin lifecycle
 
@@ -913,15 +910,9 @@ __( 'text', $domain );
 
 ### Translation template generation
 
-```bash
-# Generate .pot file with WP-CLI
-wp i18n make-pot . languages/my-plugin.pot
+There is no need to generate a `.pot` file because de use of Domain Path is deprecated
 
-# Or with the @wordpress/scripts package
-npx wp-scripts make-pot
-```
-
-Note: `load_plugin_textdomain()` is not needed since WordPress 4.6. WordPress auto-loads translations from the `/languages` folder and from translate.wordpress.org.
+`load_plugin_textdomain()` is not needed since WordPress 4.6.
 
 ## Plugin dependencies
 
@@ -1059,6 +1050,7 @@ Initial release.
 
 - Maximum 5 tags
 - Short description: 150 characters maximum, no HTML
+- Upgrade notice: under 300 characters
 - No Network header (means network-only activation, which is rarely correct)
 - `Tested up to` must reflect the latest WordPress version you have tested
 - `Stable tag` must match the actual tag in the SVN repository
@@ -1186,7 +1178,7 @@ wp i18n make-pot . languages/my-plugin.pot
 - [ ] Escaped combined functions used (`esc_html__()` not `__()`)
 - [ ] `printf()` / `sprintf()` used for strings with variables (never concatenation)
 - [ ] Translator comments added for strings with variables (`/* translators: %s: description */`)
-- [ ] `.pot` file generated and included in the `/languages/` folder
+- [ ] There is no need to generate a `.pot` file because de use of Domain Path is deprecated
 
 ### Hooks and architecture
 
@@ -1203,6 +1195,7 @@ wp i18n make-pot . languages/my-plugin.pot
 - [ ] `readme.txt` present with all required sections
 - [ ] Maximum 5 tags in `readme.txt`
 - [ ] Short description under 150 characters
+- [ ] Upgrade text under 300 characters
 - [ ] No Network header in `readme.txt`
 - [ ] All bundled libraries are GPL-compatible
 - [ ] No hardcoded calls to external services on every page load
