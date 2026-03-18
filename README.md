@@ -91,7 +91,55 @@ Comprehensive architecture and development guidelines for WordPress plugins publ
 
 ---
 
-*More skills coming soon: Interactivity API, Block Development, Block Themes, REST API, and more.*
+*More WordPress skills coming soon: Interactivity API, Block Development, Block Themes, REST API, and more.*
+
+### Writing & Content
+
+#### [Humanize Text — English](skills/humanize-text-en/)
+Removes predictable AI writing patterns from English text to make it sound natural and human-written. Based on Wikipedia's "Signs of AI writing" guide, the stop-slop and humanizer community projects, and extensive research on AI-generated text patterns.
+
+**Key topics:**
+- AI vocabulary detection and replacement (delve, tapestry, leverage, utilize, robust, seamless...)
+- Throat-clearing openers and emphasis crutches removal
+- Structural pattern breaking (negative parallelism, rule of three, rhetorical Q&A, em dash overuse)
+- Trailing -ing clause detection (significance inflation)
+- Copula avoidance correction ("serves as" → "is")
+- Emoji bullet removal and formatting cleanup
+- Hedging phrase elimination
+- Scoring system for natural writing quality (5 dimensions, 50-point scale)
+- Adaptation guidelines by text type (blog posts, marketing, docs, emails, social media)
+- 7 complete before/after transformation examples
+
+**Includes reference files:**
+- `references/phrases.md` — Full list of banned words and phrases with alternatives
+- `references/structures.md` — 16 structural patterns with AI examples and corrected versions
+- `references/examples.md` — Complete before/after text transformations
+
+**Compatibility:** Any AI assistant generating English text
+
+---
+
+#### [Humanizar texto — Español](skills/humanizar-texto-es/)
+Elimina patrones de escritura predecibles de la IA en textos en español de España para que suenen naturales y humanos. Basada en la guía "Signs of AI writing" de Wikipedia, los proyectos comunitarios stop-slop y humanizer, y una extensa investigación sobre patrones de texto generado por IA adaptados al español peninsular.
+
+**Key topics:**
+- Detección y sustitución de vocabulario IA en español (panorama, ecosistema, paradigma, implementar, optimizar, potenciar...)
+- Eliminación de muletillas de apertura y cierre (En el mundo actual, Cabe destacar, En definitiva...)
+- Rotura de patrones estructurales (contraste negativo, regla de tres, pregunta retórica, gerundio colgante)
+- Detección de metáforas gastadas (pilar fundamental, piedra angular, motor de cambio, hoja de ruta)
+- Eliminación de inflación de importancia y conectores formales excesivos
+- Sistema de puntuación para calidad de escritura natural (5 dimensiones, escala de 50 puntos)
+- Guías de adaptación por tipo de texto (artículos, marketing, documentación, emails, redes sociales)
+- 6 transformaciones completas de antes/después con patrones señalados
+
+**Includes reference files:**
+- `references/palabras.md` — Lista completa de palabras y frases a evitar con alternativas
+- `references/estructuras.md` — 15 patrones estructurales con ejemplos IA y versiones corregidas
+- `references/ejemplos.md` — Transformaciones completas de texto antes/después
+
+**Compatibility:** Any AI assistant generating Spanish (Spain) text
+
+---
 
 ## How to Use These Skills
 
@@ -101,10 +149,16 @@ Comprehensive architecture and development guidelines for WordPress plugins publ
 2. Add the skill markdown file to your project knowledge
 3. Claude will automatically reference the skill when relevant to your questions
 
+### With Claude Code
+
+1. Clone or download the skill folder to `~/.claude/skills/`
+2. Claude Code will detect and use the skill automatically
+3. For multi-file skills (like the writing skills), add the entire folder
+
 ### With ChatGPT (via Custom GPTs)
 
 1. Create a Custom GPT or edit an existing one
-2. Upload the skill markdown file to the GPT's knowledge base
+2. Upload the skill markdown file(s) to the GPT's knowledge base
 3. The GPT will use the skill content to provide specialized assistance
 
 ### With Other AI Assistants
@@ -117,7 +171,7 @@ Most modern AI assistants support knowledge documents:
 
 ### As Human Reference
 
-All skills are written in clear markdown and serve as excellent reference documentation for developers. You can:
+All skills are written in clear markdown and serve as excellent reference documentation for developers and writers. You can:
 
 - Read them directly on GitHub
 - Download and use them as personal documentation
@@ -144,11 +198,13 @@ Each skill includes:
 
 - **When to use**: Triggers and use cases
 - **Core concepts**: Fundamental principles
-- **Functions/APIs**: Detailed reference tables
-- **Code examples**: Real-world, copy-paste ready code
+- **Functions/APIs**: Detailed reference tables (for development skills)
+- **Code examples**: Real-world, copy-paste ready code (for development skills)
 - **Best practices**: Do's and don'ts
 - **Checklists**: Review and validation lists
 - **References**: Official documentation links
+
+Some skills use a multi-file structure with a main `SKILL.md` and additional reference files in a `references/` directory, following the agentskills.io progressive disclosure pattern.
 
 ## Contributing
 
@@ -194,6 +250,8 @@ Skills are based on:
 - Official WordPress Developer Resources
 - WordPress Coding Standards
 - WordPress VIP Documentation
+- Wikipedia's "Signs of AI writing" guide (WikiProject AI Cleanup)
+- Community projects: [stop-slop](https://github.com/hardikpandya/stop-slop), [humanizer](https://github.com/blader/humanizer)
 - Real-world professional development experience
 - Community feedback and contributions
 
