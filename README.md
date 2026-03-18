@@ -29,7 +29,7 @@ All skills are based on official documentation, coding standards, and real-world
 
 ### WordPress Development
 
-#### [WordPress Plugin Security](skills/wp-plugin-security.md)
+#### [WordPress Plugin Security](https://github.com/fernandotellado/ai-skills/blob/main/wp-plugin-security/SKILL.md)
 Comprehensive security guidelines for WordPress plugin development covering sanitization, validation, escaping, nonces, capabilities, SQL injection prevention, XSS protection, and CSRF mitigation. Based on official WordPress Developer Resources and WordPress Coding Standards.
 
 **Key topics:**
@@ -46,7 +46,7 @@ Comprehensive security guidelines for WordPress plugin development covering sani
 
 ---
 
-#### [WordPress Plugin Performance](skills/wp-plugin-performance.md)
+#### [WordPress Plugin Performance](https://github.com/fernandotellado/ai-skills/blob/main/wp-plugin-performance/SKILL.md)
 Comprehensive performance guidelines for WordPress plugin development covering database optimization, object caching, transients, conditional asset loading, efficient hooks, HTTP requests, WP-Cron, AJAX/REST optimization, and common anti-patterns. Based on official WordPress Developer Resources and WP VIP documentation.
 
 **Key topics:**
@@ -66,7 +66,7 @@ Comprehensive performance guidelines for WordPress plugin development covering d
 
 ---
 
-#### [WordPress Plugin Development](skills/wp-plugin-development.md)
+#### [WordPress Plugin Development](https://github.com/fernandotellado/ai-skills/blob/main/wp-plugin-development/SKILL.md)
 Comprehensive architecture and development guidelines for WordPress plugins published on wordpress.org, covering file structure, plugin header, lifecycle hooks, Settings API, admin UI, custom post types, custom database tables, internationalization, plugin dependencies, and submission requirements. Based on the official WordPress Plugin Developer Handbook and Plugin Review Team guidelines.
 
 **Key topics:**
@@ -95,7 +95,7 @@ Comprehensive architecture and development guidelines for WordPress plugins publ
 
 ### Writing & Content
 
-#### [Humanize Text — English](skills/humanize-text-en/)
+#### [Humanize Text — English](https://github.com/fernandotellado/ai-skills/blob/main/humanize-text-en/SKILL.md)
 Removes predictable AI writing patterns from English text to make it sound natural and human-written. Based on Wikipedia's "Signs of AI writing" guide, the stop-slop and humanizer community projects, and extensive research on AI-generated text patterns.
 
 **Key topics:**
@@ -119,7 +119,7 @@ Removes predictable AI writing patterns from English text to make it sound natur
 
 ---
 
-#### [Humanizar texto — Español](skills/humanizar-texto-es/)
+#### [Humanizar texto — Español](https://github.com/fernandotellado/ai-skills/blob/main/humanizar-texto-es/SKILL.md)
 Elimina patrones de escritura predecibles de la IA en textos en español de España para que suenen naturales y humanos. Basada en la guía "Signs of AI writing" de Wikipedia, los proyectos comunitarios stop-slop y humanizer, y una extensa investigación sobre patrones de texto generado por IA adaptados al español peninsular.
 
 **Key topics:**
