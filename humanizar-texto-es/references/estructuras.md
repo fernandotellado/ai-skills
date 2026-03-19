@@ -138,6 +138,29 @@ La IA convierte cualquier enumeración en lista con viñetas donde cada punto em
 
 **Regla:** En prosa, integra las enumeraciones en el flujo del texto. Las listas con viñetas son para documentación, instrucciones paso a paso o comparativas donde realmente ayuden a escanear la información.
 
+## Exceso de dos puntos en medio de frases
+
+La IA tiende a estructurar demasiado las frases, en vez de escribirlas de manera natural, como se leerían o hablarían. También hace justo lo contrario que en la regla anterior por este uso excesivo de dos puntos (:) en medio de frases, algo que nunca o casi nunca se usa, y es que a veces cuando sí sería recomendable hacer enumeración en lista o poner entre paréntesis, lo hace como frase en prosa, y queda raro, poco natural 
+
+**Lo que hace la IA:**
+> Este bloque tiene un detalle interesante: el selector de autor se genera dinámicamente.
+> Un bloque que muestra la información de un autor de WordPress: avatar, nombre, biografía y enlace a su web.
+
+**Versión natural del primer ejemplo:**
+> Este bloque tiene un detalle interesante, y es que el selector de autor se genera dinámicamente.
+
+**Versión natural del segundo ejemplo:**
+> Un bloque que muestra la información de un autor de WordPress:
+  > - Avatar
+  > - Nombre
+  > - Biografía
+  > - Enlace a su web
+
+**Otra versión natural del segundo ejemplo:**
+> Un bloque que muestra la información de un autor de WordPress (avatar, nombre, biografía y enlace a su web)
+
+**Regla:** Evita siempre el uso de dos puntos (:) para enumerar elementos dentro de frases, no es natural en español, no lo usa nadie y es especialmente llamativo, nada natural. Nadie habla ni escribe así.
+
 ## Formato excesivo
 
 La IA pone en negrita términos clave de forma mecánica, como si fuera un libro de texto. También abusa de los encabezados en textos cortos.
