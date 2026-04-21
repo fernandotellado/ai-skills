@@ -36,17 +36,21 @@ Varía el ritmo: mezcla frases cortas con largas.
 
 ### Reglas principales
 
-1. **Elimina frases de relleno.** Quita aperturas predecibles y muletillas de énfasis. Consulta [references/palabras.md](references/palabras.md).
-2. **Rompe las estructuras formulaicas.** Evita contrastes binarios, tríos forzados, preguntas retóricas con respuesta inmediata. Consulta [references/estructuras.md](references/estructuras.md).
-3. **Varía el ritmo.** Mezcla la longitud de las frases. Dos elementos mejor que tres. No termines todos los párrafos igual.
-4. **Confía en el lector.** Afirma directamente. No suavices, no justifiques, no lleves de la mano.
-5. **Elimina frases de impacto artificial.** Si suena a titular de LinkedIn o a frase para enmarcar, reescríbela.
-6. **Usa español coloquial de España.** Nada de español neutro ni latinoamericanismos formales. Tutea, usa expresiones naturales, no tengas miedo de las contracciones y formas coloquiales.
+1. **Elimina frases de relleno.** Quita aperturas predecibles y muletillas de énfasis. Consulta la sección "Palabras y frases a evitar".
+2. **Rompe las estructuras formulaicas.** Evita contrastes binarios, tríos forzados, preguntas retóricas con respuesta inmediata. Consulta la sección "Patrones estructurales a evitar".
+3. **Entrelaza frases cortas en español.** Tres o más frases cortas seguidas sobre el mismo tema son ritmo de inglés, no de español. Une con comas, conjunciones (y, pero, porque, así que) o relativos.
+4. **No pongas coma automática tras complementos iniciales cortos.** Con complementos de menos de 5 palabras, no va coma. Solo va cuando el complemento es largo o hay ambigüedad sin ella.
+5. **Varía el ritmo.** Mezcla la longitud de las frases. Dos elementos mejor que tres. No termines todos los párrafos igual.
+6. **Confía en el lector.** Afirma directamente. No suavices, no justifiques, no lleves de la mano.
+7. **Elimina frases de impacto artificial.** Si suena a titular de LinkedIn o a frase para enmarcar, reescríbela.
+8. **Usa español coloquial de España.** Nada de español neutro ni latinoamericanismos formales. Tutea, usa expresiones naturales, no tengas miedo de las contracciones y formas coloquiales.
 
 ## Comprobaciones rápidas
 
 Antes de entregar cualquier texto, revisa:
 
+- ¿Hay tres o más frases cortas seguidas sobre el mismo tema? Une al menos dos con comas, conjunciones o relativos.
+- ¿Hay coma después de un complemento inicial corto (menos de 5 palabras)? Quítala. Solo va cuando el complemento es largo.
 - ¿Tres frases seguidas tienen la misma longitud? Rompe una.
 - ¿Un párrafo termina con frase sentenciosa tipo frase célebre? Cámbiala.
 - ¿Hay una raya (—) antes de una revelación? Quítala, usa coma o punto.
@@ -55,10 +59,7 @@ Antes de entregar cualquier texto, revisa:
 - ¿Hay más de dos conectores formales (asimismo, no obstante, por consiguiente) en un párrafo? Sustituye la mayoría por conexiones naturales.
 - ¿Terminas una sección con "En definitiva" o "En resumen"? Elimínalo.
 - ¿Usas gerundios vacíos al final de la frase ("contribuyendo a...", "posicionándose como...")? Reescribe con verbo conjugado.
-- ¿Hay tres o más frases cortas seguidas sobre el mismo tema? Une dos 
-  con comas o conjunciones.
-- ¿Hay coma después de un complemento inicial corto (menos de 5 palabras)? 
-  Quítala.
+- ¿Hay dos puntos (:) en medio de una frase corrida para introducir una enumeración corta? Reescribe con coma o paréntesis. (Ojo: en listas concepto-explicación tipo `Concepto: explicación`, los dos puntos sí son correctos y no hay que quitarlos.)
 
 ## Palabras y frases prohibidas
 
