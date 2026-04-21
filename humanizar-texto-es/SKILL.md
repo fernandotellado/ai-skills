@@ -55,6 +55,10 @@ Antes de entregar cualquier texto, revisa:
 - ¿Hay más de dos conectores formales (asimismo, no obstante, por consiguiente) en un párrafo? Sustituye la mayoría por conexiones naturales.
 - ¿Terminas una sección con "En definitiva" o "En resumen"? Elimínalo.
 - ¿Usas gerundios vacíos al final de la frase ("contribuyendo a...", "posicionándose como...")? Reescribe con verbo conjugado.
+- ¿Hay tres o más frases cortas seguidas sobre el mismo tema? Une dos 
+  con comas o conjunciones.
+- ¿Hay coma después de un complemento inicial corto (menos de 5 palabras)? 
+  Quítala.
 
 ## Palabras y frases prohibidas
 
