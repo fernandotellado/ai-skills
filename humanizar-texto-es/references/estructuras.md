@@ -10,7 +10,7 @@ La IA tiende a escribir frases cortas encadenadas con punto y seguido, imitando 
 > Te cuento una cosa que igual no sabías. En el primer trimestre de 2025, Cloudflare paró 20,5 millones de ataques DDoS. Eso es casi tanto como en todo 2024. Y la cosa no va a menos.
 
 **Versión natural:**
-> Te cuento una cosa que igual no sabías, y es que en el primer trimestre de 2025 Cloudflare paró 20,5 millones de ataques DDoS, casi tanto como en todo 2024 junto, y la cosa no va a menos.
+> Te cuento una cosa que igual no sabías, y es que en el primer trimestre de 2025 Cloudflare paró 20,5 millones de ataques DDoS, casi tantos como en todo 2024 junto, y la cosa no va a menos.
 
 **Otro ejemplo IA:**
 > Un buen hosting te pone el trabajo más fácil. Tienen WAF propio. Detectan anomalías. El soporte reacciona rápido.
@@ -178,43 +178,68 @@ La IA estructura argumentos con «En primer lugar... En segundo lugar... Por úl
 
 **Regla:** si vas a enumerar, hazlo de forma natural, no con la estructura de examen de selectividad.
 
-## Listas con viñetas y negritas en prosa
+## Listas forzadas en prosa corrida
 
-La IA convierte cualquier enumeración en lista con viñetas donde cada punto empieza con un término en negrita seguido de dos puntos. Esto es aceptable en documentación técnica, pero en artículos y prosa resulta artificial.
+La IA tiende a convertir cualquier enumeración breve en una lista con viñetas, aunque fluiría mejor como frase corrida. Es típico cuando son tres o cuatro beneficios cortos que cabrían perfectamente en una línea.
 
 **Lo que hace la IA:**
 > Los beneficios son claros:
-> - **Velocidad**: Carga un 50% más rápido.
-> - **Seguridad**: Protege contra ataques XSS.
-> - **Compatibilidad**: Funciona con todos los navegadores.
+> - Velocidad: carga un 50% más rápido.
+> - Seguridad: protege contra ataques XSS.
+> - Compatibilidad: funciona con todos los navegadores.
 
 **Versión natural:**
 > Carga un 50% más rápido, protege contra ataques XSS y funciona en todos los navegadores.
 
-**Regla:** en prosa, integra las enumeraciones en el flujo del texto. Las listas con viñetas son para documentación, instrucciones paso a paso o comparativas donde realmente ayuden a escanear la información.
+**Regla:** si cada elemento es una frase muy corta y la enumeración entera cabe en dos líneas, intégrala en el texto. Reserva las listas para enumeraciones largas, pasos secuenciales o elementos con explicación suficiente como para justificar el formato.
 
-## Exceso de dos puntos en medio de frases
+## Listas concepto-explicación (formato correcto)
 
-La IA tiende a estructurar demasiado las frases, en vez de escribirlas de manera natural como se leerían o hablarían. A veces, cuando sí sería recomendable hacer enumeración en lista o poner entre paréntesis, lo hace como frase en prosa con dos puntos metidos en medio, y queda poco natural.
+Cuando una lista sí tiene sentido (elementos largos, con explicación propia, donde cada uno es un concepto desarrollado), el formato correcto en español es `Concepto: explicación`, con dos puntos que separan el término del desarrollo. Este uso es estándar, no es patrón IA, y no hay que evitarlo. Incluirlo aquí expresamente porque la IA, por evitar los dos puntos en prosa, a veces los quita también de las listas y las deja raras.
 
-**Lo que hace la IA:**
+**Formato correcto (así se hace):**
+> - **Extorsión:** alguien te escribe diciendo que si no le pagas X cantidad en criptomonedas te tumba la web, y si no pagas la tumba un rato para demostrar que puede.
+> - **Competencia desleal:** un competidor cansino contrata un ataque el día de tu Black Friday o el lanzamiento de un producto.
+> - **Hacktivismo:** si tu web tiene contenido que alguien considera ofensivo, te puede caer un ataque por motivos ideológicos.
+
+**Formato incorrecto (patrón IA que evita los dos puntos por exceso de celo):**
+> - **Extorsión.** Alguien te escribe diciendo que si no le pagas X cantidad...
+> - **Competencia desleal.** Un competidor cansino contrata un ataque...
+> - **Hacktivismo.** Si tu web tiene contenido que alguien considera ofensivo...
+
+**Regla:** en listas donde cada punto es «concepto + explicación», usa dos puntos tras el concepto (normalmente en negrita) y continúa con minúscula. No uses punto tras el concepto para luego seguir con mayúscula, porque rompe la relación natural concepto-explicación y suena artificial.
+
+**Notas:**
+- El concepto en negrita es opcional pero habitual y ayuda a escanear la lista.
+- Tras los dos puntos se sigue en minúscula cuando la explicación es parte de la misma idea. Si la explicación son varias frases completas, puede empezar con mayúscula, pero el primer bloque tras los dos puntos sigue siendo la explicación directa del concepto.
+- Si el concepto no necesita desarrollo (es solo un ítem en una lista simple), no hace falta ni los dos puntos ni la negrita.
+
+## Dos puntos en frase corrida (cuándo sí son patrón IA)
+
+Lo anterior no significa que los dos puntos sean siempre bienvenidos. Dentro de una frase en prosa corrida, los dos puntos para introducir una enumeración corta o una explicación son poco naturales en español y sí son patrón IA.
+
+**Lo que hace la IA (mal):**
 > Este bloque tiene un detalle interesante: el selector de autor se genera dinámicamente.
 > Un bloque que muestra la información de un autor de WordPress: avatar, nombre, biografía y enlace a su web.
 
 **Versión natural del primer ejemplo:**
 > Este bloque tiene un detalle interesante, y es que el selector de autor se genera dinámicamente.
 
-**Versión natural del segundo ejemplo:**
-> Un bloque que muestra la información de un autor de WordPress:
-> - Avatar
-> - Nombre
-> - Biografía
-> - Enlace a su web
-
-**Otra versión natural del segundo ejemplo:**
+**Versión natural del segundo ejemplo (opción 1, paréntesis):**
 > Un bloque que muestra la información de un autor de WordPress (avatar, nombre, biografía y enlace a su web).
 
-**Regla:** evita los dos puntos (:) para enumerar elementos dentro de frases, no es natural en español. Si la enumeración es larga, hazla en lista; si es corta, úsala entre paréntesis o con conjunciones.
+**Versión natural del segundo ejemplo (opción 2, lista):**
+> Un bloque que muestra la información de un autor de WordPress:
+> - Avatar.
+> - Nombre.
+> - Biografía.
+> - Enlace a su web.
+
+**Regla:** evita los dos puntos en medio de frase corrida para enumerar o explicar. Reescribe con conjunción, paréntesis o pasa a formato lista.
+
+**Resumen de los dos usos de los dos puntos:**
+- **En prosa corrida:** evítalos para enumerar o explicar, es patrón IA en español.
+- **En listas concepto-explicación:** úsalos con normalidad, es el formato estándar español.
 
 ## Formato excesivo
 
@@ -226,7 +251,7 @@ La IA pone en negrita términos clave de forma mecánica, como si fuera un libro
 **Versión natural:**
 > Aquí es donde entra el object caching, que guarda los datos en memoria para que el sitio cargue más rápido.
 
-**Regla:** la negrita es para enfatizar algo que realmente lo necesita, no para marcar cada término técnico o palabra clave.
+**Regla:** la negrita es para enfatizar algo que realmente lo necesita, no para marcar cada término técnico o palabra clave. La excepción son las listas concepto-explicación, donde el concepto va en negrita por convención (ver sección correspondiente).
 
 ## Apertura con definición de diccionario
 
