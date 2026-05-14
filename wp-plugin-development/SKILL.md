@@ -5,7 +5,7 @@ compatibility: "WordPress 6.0+ / PHP 7.4+. Targets plugins for distribution on w
 license: GPL-2.0-or-later
 metadata:
   author: fernando-tellado
-  version: "1.1"
+  version: "1.2"
 ---
 
 # WordPress plugin development
@@ -60,6 +60,30 @@ All functions, classes, constants, hooks, options, post types, taxonomy slugs, a
 | Script handle | `ayudawp-admin` | `admin-script` |
 
 Do not use `wp_`, `wordpress_`, or `wc_` as prefixes — these are reserved by WordPress core and WooCommerce.
+
+### Prefix consistency
+
+A unique prefix of 4+ characters is not enough on its own: **the same prefix must be used across every identifier in the plugin**. The Plugin Review Team counts how many identifiers use the dominant prefix and flags any outlier — even if the outlier is itself a valid 4-character prefix.
+
+```php
+// WRONG: 28 identifiers use ayudawp_*, one uses Aeuw_* → flagged.
+class Aeuw_Promo_Banner { ... }
+
+function ayudawp_register_settings() { ... }
+function ayudawp_render_form() { ... }
+add_option( 'ayudawp_settings', ... );
+
+// CORRECT: every identifier uses the same dominant prefix.
+class Ayudawp_Promo_Banner { ... }
+
+function ayudawp_register_settings() { ... }
+function ayudawp_render_form() { ... }
+add_option( 'ayudawp_settings', ... );
+```
+
+Class file names should follow the same convention: `class-ayudawp-promo-banner.php`, not `class-aeuw-promo-banner.php`. The file slug must match the class name in lowercase, with dashes between words.
+
+This applies to function names, class names, constants, options, transients, meta keys, post type slugs, taxonomy slugs, capability names, hook names, script/style handles, AJAX action names, and CSS class prefixes used inside the plugin's own markup.
 
 ## Plugin file structure
 
@@ -213,6 +237,9 @@ The only acceptable way to add small amounts of dynamic CSS or JS is through `wp
 | `License` | Yes | Must be GPL-2.0-or-later or compatible |
 | `Text Domain` | Yes | Must match the plugin folder slug |
 | `Domain Path` | Deprecated | Do no add this line |
+| `Requires Plugins` | Optional (WP 6.5+) | Comma-separated plugin slugs that must be active before this plugin activates. WordPress prompts the user to install/activate them. Older WP versions ignore the header silently, so it is safe to declare even on plugins that target 6.0+. |
+| `WC requires at least` | WooCommerce add-ons only | Minimum WooCommerce version. Recognised by WC itself, not by WordPress core. |
+| `WC tested up to` | WooCommerce add-ons only | Latest WooCommerce version you tested against. |
 
 ## Plugin lifecycle
 
@@ -316,6 +343,23 @@ $wpdb->query(
 // register_uninstall_hook( MYPLUGIN_FILE, 'myplugin_uninstall' );
 // Note: uninstall.php takes precedence over register_uninstall_hook()
 ```
+
+### Path detection in `uninstall.php`
+
+The Plugin Review Team flags any combination of `WP_PLUGIN_DIR` with a hardcoded slug literal as "hardcoded plugin folder path". It does not matter if the code is conceptually correct (e.g. detecting a legacy parallel install); the reviewer will reject it.
+
+```php
+// REJECTED: even though it would work, the linter flags the slug literal.
+$canonical = trailingslashit( WP_PLUGIN_DIR ) . 'my-plugin';
+if ( __DIR__ !== untrailingslashit( $canonical ) && is_dir( $canonical ) ) {
+    return;
+}
+
+// ACCEPTED: derive the path from __FILE__ instead.
+$plugin_dir = plugin_dir_path( __FILE__ );   // or use __DIR__
+```
+
+If you genuinely need a safeguard for legacy installation folders (e.g. users who downloaded a GitHub source ZIP before the canonical wordpress.org release existed), document the upgrade path in the FAQ instead and let the standard install/uninstall flow handle it.
 
 ### Lifecycle comparison
 
@@ -465,6 +509,46 @@ $fn = function() { /* ... */ };
 add_action( 'init', $fn );
 remove_action( 'init', $fn ); // Works only if $fn is still in scope
 ```
+
+### Filters that depend on a specific call site
+
+Some filters only fire in a specific code path. The most common pitfall: `shortcode_atts_{tag}` only fires when WordPress calls `shortcode_atts()` from inside `do_shortcode()`. If the same render function is invoked directly from another context (a custom WooCommerce endpoint, a Gutenberg block render callback, a REST response, an `admin_post_*` handler), the filter never runs.
+
+```php
+// WRONG: The filter only applies when the form is rendered via [my_form] shortcode.
+// Calling my_render_form() from a WC endpoint silently skips the prefill.
+add_filter( 'shortcode_atts_my_form', 'my_prefill_from_query' );
+function my_prefill_from_query( $atts ) {
+    if ( isset( $_GET['order_id'] ) ) {
+        $atts['order_id'] = sanitize_text_field( wp_unslash( $_GET['order_id'] ) );
+    }
+    return $atts;
+}
+
+// CORRECT: Extract the logic to a helper that both call sites invoke.
+function my_get_prefill_order_id() {
+    // ... nonce check + sanitize + return value ...
+    return $order_id;
+}
+
+// Endpoint caller passes the value directly:
+function my_account_endpoint_content() {
+    my_render_form( array(
+        'order_id' => my_get_prefill_order_id(),
+    ) );
+}
+
+// Shortcode caller goes through the filter, which uses the same helper:
+add_filter( 'shortcode_atts_my_form', function( $atts ) {
+    $order_id = my_get_prefill_order_id();
+    if ( '' !== $order_id ) {
+        $atts['order_id'] = $order_id;
+    }
+    return $atts;
+} );
+```
+
+Same pattern applies to any filter named after a specific hook context: `the_content` filters do not run on raw post body access, `the_title` does not run on `get_the_title()` in some admin contexts, etc. When in doubt, extract the logic and call it from every entry point.
 
 ## Settings API
 
@@ -998,7 +1082,51 @@ if ( ! empty( $missing_extensions ) ) {
 | `extract()` usage | Forbidden — creates unpredictable variable scope |
 | Generic function/class names | Prefix everything with a unique identifier |
 | Short or generic prefix (under 4 characters) | Use a unique prefix of at least 4 characters for all functions, classes, constants, hooks, and handles |
+| Inconsistent prefix across identifiers | Keep one dominant prefix for the whole plugin; never mix two unrelated 4-character prefixes |
 | Inline <script> or <style> tags in PHP | Use wp_enqueue_script() / wp_enqueue_style() with external files; use wp_add_inline_script() / wp_add_inline_style() only for small dynamic values |
+| `phpcs:ignore` on security sniffs | Refactor the code so the sniffer is satisfied without suppression (see wp-plugin-security skill) |
+| `echo helper()` where helper returns HTML | Wrap in `wp_kses_post()` / `wp_kses()` or refactor the helper to echo directly |
+| Hardcoded slug literal under `WP_PLUGIN_DIR` | Use `plugin_dir_path( __FILE__ )` / `__DIR__` |
+| Admin-wide promotional notices | See "Promotional UI inside the admin" below |
+
+### Promotional UI inside the admin (Guideline 11)
+
+The Plugin Review Team explicitly forbids "hijacking the admin dashboard" with promotional content. A cross-promo box (linking to your other plugins or paid services) is **acceptable** if and only if all of these hold:
+
+- Rendered exclusively from the plugin's own settings screen callback. Never hooked into `admin_notices` globally.
+- No "dismissed forever" cookies or user-meta flags whose only purpose is to re-show the nag.
+- No HTTP requests to an external service to decide which item to show. Use a static catalog inside the plugin.
+- No Dashboard widgets, no top-bar promos, no pop-ups, no toolbar items.
+
+```php
+// CORRECT: instantiation lives inside the settings page callback.
+function ayudawp_settings_page_html() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die();
+    }
+    ?>
+    <div class="wrap">
+        <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+        <form method="post" action="options.php">
+            <?php settings_fields( 'ayudawp_options_group' ); ?>
+            <?php do_settings_sections( 'ayudawp-settings' ); ?>
+            <?php submit_button(); ?>
+        </form>
+        <?php
+        // Promo box only appears here, never on other admin screens.
+        if ( class_exists( 'Ayudawp_Promo_Banner' ) ) {
+            ( new Ayudawp_Promo_Banner( 'my-plugin' ) )->render();
+        }
+        ?>
+    </div>
+    <?php
+}
+
+// WRONG: a global admin_notices hook shows the promo on every admin screen.
+add_action( 'admin_notices', 'ayudawp_show_promo' );
+```
+
+The other three legitimate uses of `admin_notices` are: the one-shot welcome notice after activation (gated by a short-lived transient), feedback after a bulk action (gated by a `$_GET` flag that comes from your own redirect with a nonce), and validation errors after a save (gated by a user-scoped transient). All three appear only once and only when there is a real event to communicate.
 
 ### readme.txt structure
 
@@ -1048,14 +1176,17 @@ Initial release.
 
 ### readme.txt rules for wordpress.org
 
-- Maximum 5 tags
+- Maximum 5 tags **and no duplicates** (a `Tags:` line with `woocommerce, eu, woocommerce, …` counts the duplicate and fails the check)
+- All tags in English (the directory is international; localized tags get little traffic and crowd the slot count)
 - Short description: 150 characters maximum, no HTML
 - Upgrade notice: under 300 characters
 - No Network header (means network-only activation, which is rarely correct)
 - `Tested up to` must reflect the latest WordPress version you have tested
-- `Stable tag` must match the actual tag in the SVN repository
-- Changelog must be present and maintained
+- `Stable tag` must match the actual tag in the SVN repository, **and the `Version:` in the main plugin file header**, **and the version constant** defined inside the plugin — all three must agree on every release
+- Changelog must be present and maintained — keep only the latest major and its minor releases in `readme.txt`; move older entries to a separate `changelog.txt` if you want to keep the full history available
+- "Upgrade Notice" should contain only the latest version's notice; replace it on every release (not accumulate)
 - No donation links unless approved by the Plugin Review Team
+- Avoid release-process noise in the changelog: lines like "Internal: WPCS pass", "Dev tooling: composer.json added", "Refactored functions-admin.php into smaller files for maintenance, no behavioural change" are not user-facing and belong in `changelog.txt` or a git tag message, not in the public readme
 
 ### Assets for the wordpress.org plugin page
 
@@ -1068,6 +1199,55 @@ Place these in the `/assets/` folder in the SVN root (not inside the plugin fold
 | `icon-128x128.png` | 128×128px | Plugin icon |
 | `icon-256x256.png` | 256×256px | High-DPI icon |
 | `screenshot-1.png` | Any | Must match screenshots in readme |
+
+Screenshots live in `/assets/` at the SVN root, **not** inside the plugin folder. Many authors keep a working folder of screenshots inside their development repo (with descriptive filenames in their own language) and only push the final `screenshot-1.png` … `screenshot-N.png` to SVN `/assets/`. Do not ship either folder inside the ZIP that goes to `/trunk/`.
+
+### Files and folders to keep OUT of the ZIP
+
+The plugin ZIP uploaded to wp.org (and committed to `/trunk/` in SVN) should contain only what the plugin needs at runtime. Use a `.distignore` file (recognised by 10up's GitHub Action and similar tooling) or build the ZIP manually with explicit excludes.
+
+Typical exclusion list:
+
+```
+# Development metadata
+.git
+.gitignore
+.gitattributes
+.github
+.editorconfig
+.distignore
+node_modules
+package.json
+package-lock.json
+composer.json
+composer.lock
+phpcs.xml
+phpcs.xml.dist
+phpunit.xml
+phpunit.xml.dist
+tests
+
+# Author-private documentation (the GitHub readme, internal notes)
+README.md
+CHANGELOG.md
+RELEASING.md
+CLAUDE.md
+docs
+
+# Source assets for the SVN /assets/ folder
+capturas
+screenshots
+
+# Translations (managed via translate.wordpress.org / GlotPress)
+languages
+
+# macOS noise
+.DS_Store
+```
+
+`languages/` is excluded when you delegate translations to GlotPress (the normal case for plugins published on wp.org). If you ship the `.pot` and an initial `.mo` inside the plugin, keep the folder.
+
+`README.md` is the GitHub-flavoured readme; wp.org reads `readme.txt`. Shipping both confuses users who clone from GitHub vs. install from wp.org.
 
 ## Debugging
 
@@ -1193,14 +1373,20 @@ wp i18n make-pot . languages/my-plugin.pot
 ### wordpress.org compliance
 
 - [ ] `readme.txt` present with all required sections
-- [ ] Maximum 5 tags in `readme.txt`
+- [ ] Maximum 5 tags in `readme.txt` and no duplicates
 - [ ] Short description under 150 characters
-- [ ] Upgrade text under 300 characters
+- [ ] Upgrade text under 300 characters and only the latest version
+- [ ] `Stable tag`, plugin file `Version:` header, and the in-code version constant all agree
 - [ ] No Network header in `readme.txt`
+- [ ] No release-process noise in the public changelog (`Internal:`, `Dev tooling:`, refactors with no user-facing change)
 - [ ] All bundled libraries are GPL-compatible
 - [ ] No hardcoded calls to external services on every page load
 - [ ] No inline <script> or <style> tags — all assets use wp_enqueue_* with external files
 - [ ] No shipping of debug code (`var_dump`, `print_r`, `error_reporting()`)
+- [ ] Promotional UI (if any) renders only inside the plugin's own settings page, never hooked to `admin_notices` globally
+- [ ] Prefix is consistent across every function, class, constant, option, hook, handle, meta key, and CSS class
+- [ ] `.distignore` (or build script) excludes dev metadata, internal docs, source screenshots, languages folder, and macOS noise from the ZIP
+- [ ] `uninstall.php` derives paths from `__FILE__` / `__DIR__`, never from `WP_PLUGIN_DIR` + slug literal
 
 ## References
 

@@ -5,7 +5,7 @@ compatibility: "WordPress 6.0+ / PHP 7.4+. Applies to plugins, themes, and custo
 license: GPL-2.0-or-later
 metadata:
   author: fernando-tellado
-  version: "1.0"
+  version: "1.1"
 ---
 
 # WordPress plugin security
@@ -248,6 +248,50 @@ echo '<a href="' . $url . '">' . $text . '</a>';
 echo '<a href="' . esc_url( $url ) . '">' . esc_html( $text ) . '</a>';
 ```
 
+### Echoing the return value of a helper that already escapes
+
+The wordpress.org review team **rejects** `echo my_helper()` even if `my_helper()` already escapes every value internally. Late escaping must be visible at the `echo` call site. There are three valid options depending on what the helper returns:
+
+```php
+// HELPER RETURNS SIMPLE HTML (spans, links, basic tags)
+// Wrap the echo in wp_kses_post():
+echo wp_kses_post( ayudawp_render_status_badge( $post_id ) );
+
+// HELPER RETURNS HTML THAT wp_kses_post() WOULD STRIP (forms, inputs, selects, buttons)
+// Refactor the helper to echo directly (void return) and keep a string wrapper
+// only for callers that genuinely need a return value (shortcodes that return).
+function ayudawp_render_form( $args = array() ) {
+    // ... uses esc_attr, esc_html, esc_url internally, but echoes the markup ...
+    ?>
+    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+        <input type="text" name="ayudawp_field" value="<?php echo esc_attr( $args['value'] ); ?>">
+    </form>
+    <?php
+}
+
+function ayudawp_get_form_html( $args = array() ) {
+    ob_start();
+    ayudawp_render_form( $args );
+    return ob_get_clean();
+}
+
+// Then the endpoint caller just calls the void version:
+ayudawp_render_form( $args );        // No echo, no wrapping needed.
+
+// And the shortcode caller uses the string wrapper:
+return ayudawp_get_form_html( $args );
+
+// HELPER RETURNS HTML WITH MIXED ALLOWED TAGS
+// Use wp_kses() with an explicit allowlist:
+$allowed = array(
+    'select' => array( 'name' => true, 'id' => true, 'class' => true ),
+    'option' => array( 'value' => true, 'selected' => true ),
+);
+echo wp_kses( wp_dropdown_pages( array( 'echo' => 0, /* ... */ ) ), $allowed );
+```
+
+The "escaped internally" comment with a `phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped` is a **rejection trigger** in the manual review, regardless of whether the helper does escape correctly. Refactor instead of suppressing.
+
 ### Escaping with localization
 
 Use combined escape + localization functions:
@@ -355,6 +399,109 @@ if ( ! isset( $_POST['_wpnonce'] ) ||
 - Nonces have limited lifetime (default 24 hours, configurable)
 - **Nonces alone are not sufficient** - always combine with capability checks
 - Nonces are user-specific and session-specific
+
+### Nonces on `$_GET` reads from your own redirects
+
+When a form handler redirects back to the original page with a feedback flag (`?my_sent=1`, `?my_error=fields`, `?my_bulk_done=3`), the receiving code is reading `$_GET` and the security sniffer flags it. **Suppressing the sniffer with `phpcs:disable` is a rejection trigger** in the manual review, even though the data only exists because your own handler put it there.
+
+The correct pattern is mutual nonce verification: the emitter generates a `wp_create_nonce()` and adds it to the redirect URL; the receiver verifies it before reading the flag and silently degrades if invalid.
+
+```php
+// EMITTER (form handler, bulk action handler, etc.)
+function ayudawp_redirect_with_success() {
+    $url = wp_get_referer() ? wp_get_referer() : home_url();
+    $url = add_query_arg(
+        array(
+            'ayudawp_sent' => '1',
+            '_wpnonce'     => wp_create_nonce( 'ayudawp_form_feedback' ),
+        ),
+        $url
+    );
+    wp_safe_redirect( $url );
+    exit;
+}
+
+// RECEIVER (form renderer, admin notice, etc.)
+$success = false;
+
+if ( isset( $_GET['_wpnonce'] )
+    && wp_verify_nonce(
+        sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ),
+        'ayudawp_form_feedback'
+    )
+) {
+    $success = isset( $_GET['ayudawp_sent'] )
+        && '1' === sanitize_text_field( wp_unslash( $_GET['ayudawp_sent'] ) );
+}
+```
+
+Same pattern applies to "pre-fill" links built by your plugin (e.g. a WooCommerce My Account button that pre-fills an order number in a form): bind the nonce to the specific resource (`'ayudawp_prefill_' . $order_ref`) so an old bookmark or a guessed URL cannot trigger the prefill.
+
+### Explicit `exit;` after redirect inside a nonce check
+
+PHPCS and the manual review do not follow execution into helper functions. If your nonce check looks like this:
+
+```php
+// REJECTED: the helper does exit; internally, but the sniffer cannot tell.
+if ( ! wp_verify_nonce( ... ) ) {
+    ayudawp_redirect_with_error( 'nonce' );
+}
+
+// Code continues reading $_POST → sniffer flags "no nonce check found".
+$name = sanitize_text_field( wp_unslash( $_POST['ayudawp_name'] ) );
+```
+
+Add a literal `exit;` even though the helper already exits:
+
+```php
+// ACCEPTED: the exit; is in the same scope as the read, sniffer is satisfied.
+if ( ! isset( $_POST['ayudawp_nonce'] ) ) {
+    ayudawp_redirect_with_error( 'nonce' );
+    exit;
+}
+
+$nonce = sanitize_text_field( wp_unslash( $_POST['ayudawp_nonce'] ) );
+
+if ( ! wp_verify_nonce( $nonce, 'ayudawp_submit_action' ) ) {
+    ayudawp_redirect_with_error( 'nonce' );
+    exit;
+}
+```
+
+Splitting the `isset()` and the `wp_verify_nonce()` into two separate `if` blocks also helps: it makes the security boundary unambiguous to humans reading the diff.
+
+### Explicit nonce verification even when the parent hook already verifies
+
+Some WordPress and WooCommerce hooks already verify a nonce before firing (e.g. `woocommerce_process_product_meta` fires only after `woocommerce_meta_nonce` has been verified by core). The sniffer does not know that, and the manual review rejects callbacks that do not verify the nonce themselves.
+
+```php
+// REJECTED, even with a comment explaining that WC already verifies:
+function ayudawp_save_product_meta( $post_id ) {
+    // phpcs:disable WordPress.Security.NonceVerification.Missing
+    $value = isset( $_POST['_ayudawp_excluded'] ) ? 'yes' : 'no';
+    // phpcs:enable WordPress.Security.NonceVerification.Missing
+    update_post_meta( $post_id, '_ayudawp_excluded', $value );
+}
+
+// ACCEPTED: belt-and-suspenders verification + explicit capability check.
+function ayudawp_save_product_meta( $post_id ) {
+    if ( ! isset( $_POST['woocommerce_meta_nonce'] )
+        || ! wp_verify_nonce(
+            sanitize_text_field( wp_unslash( $_POST['woocommerce_meta_nonce'] ) ),
+            'woocommerce_save_data'
+        )
+    ) {
+        return;
+    }
+
+    if ( ! current_user_can( 'edit_product', $post_id ) ) {
+        return;
+    }
+
+    $value = isset( $_POST['_ayudawp_excluded'] ) ? 'yes' : 'no';
+    update_post_meta( $post_id, '_ayudawp_excluded', $value );
+}
+```
 
 ### Modifying nonce lifetime
 
@@ -689,6 +836,16 @@ register_rest_route( 'myplugin/v1', '/items', array(
 - [ ] Uses WordPress HTTP API, not raw cURL
 - [ ] Uses `wp_enqueue_*` for scripts/styles
 
+### wordpress.org review hardening
+
+- [ ] No `phpcs:ignore` / `phpcs:disable` on any `WordPress.Security.*` sniff
+- [ ] No `phpcs:ignore` on `EscapeOutput.OutputNotEscaped` — refactor instead
+- [ ] Every `echo helper()` either wraps in `wp_kses_post()` / `wp_kses()` or the helper echoes directly
+- [ ] Every `$_GET` read on a feedback flag is gated by an explicit `wp_verify_nonce()`
+- [ ] Every nonce check has a literal `exit;` (or `return;`) after the redirect, in the same scope as the read
+- [ ] Callbacks attached to hooks that "already verify a nonce" verify it themselves anyway
+- [ ] `Reply-To` / `From` headers built from user input run through `sanitize_text_field()` + `sanitize_email()` before composition
+
 ## WPCS security sniffs
 
 WordPress Coding Standards includes these security sniffs:
@@ -704,6 +861,62 @@ Run PHPCS with WordPress standards:
 ```bash
 phpcs --standard=WordPress path/to/plugin
 ```
+
+## Surviving the wordpress.org review
+
+The plugin review team rejects more aggressively than PHPCS alone. Their reviewers do not read comments that justify a `phpcs:ignore` — they treat the suppression itself as a red flag. Aim for **zero security-sniff suppressions** in the codebase you submit.
+
+### Security sniffs that MUST NOT be suppressed
+
+| Sniff | Real fix instead of `phpcs:ignore` |
+|-------|------------------------------------|
+| `WordPress.Security.EscapeOutput.OutputNotEscaped` | `wp_kses_post()` for simple HTML, `wp_kses()` with an allowlist for HTML with forms/inputs, or refactor the helper to echo directly with internal escaping. |
+| `WordPress.Security.NonceVerification.Recommended` (on `$_GET`) | Add a `_wpnonce` to the URL the emitter generates; verify it in the reader before reading any other query arg. |
+| `WordPress.Security.NonceVerification.Missing` (on `$_POST`) | Verify the parent hook's nonce explicitly inside the callback, even when the parent verifies it before firing. Add `exit;` literal after redirects. |
+| `WordPress.Security.ValidatedSanitizedInput.MissingUnslash` | Add `wp_unslash()` before sanitizing every superglobal read. |
+| `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized` | Apply the most specific `sanitize_*` for the field. |
+
+### Security sniffs that are safe to leave suppressed (with justification)
+
+These are not security issues; the manual reviewer recognizes them as performance/style hints:
+
+- `WordPress.DB.SlowDBQuery.slow_db_query_meta_key` / `meta_value` / `meta_query` on a query where the meta key is genuinely the only way to look up the data.
+- `Generic.CodeAnalysis.UnusedFunctionParameter.Found` on a hook callback whose signature is fixed by WordPress.
+
+Keep the comment justification short and on the same line:
+
+```php
+'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- look-up by customer email per Privacy API contract.
+    array(
+        'key'   => '_ayudawp_email',
+        'value' => $email,
+    ),
+),
+```
+
+### Reading `$_SERVER` without nonce
+
+The reviewer does not require nonce for `$_SERVER` reads (`HTTP_USER_AGENT`, `REMOTE_ADDR`, `HTTP_X_FORWARDED_FOR`, etc.) because they are not user-controllable through a URL. Still sanitize and `wp_unslash` them and validate with `filter_var( $ip, FILTER_VALIDATE_IP )` for IP addresses:
+
+```php
+$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] )
+    ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) )
+    : '';
+```
+
+### Email header injection on `Reply-To`
+
+If you build `Reply-To` or `From` headers from user input (e.g. the customer's email so the admin can reply directly), sanitize both name and email before composing the header string:
+
+```php
+$clean_name  = sanitize_text_field( $name );   // strips \r and \n
+$clean_email = sanitize_email( $email );        // validates and strips control chars
+$headers[]   = sprintf( 'Reply-To: %s <%s>', $clean_name, $clean_email );
+
+wp_mail( $to, $subject, $body, $headers );
+```
+
+Never concatenate raw `$_POST` values into a header — CRLF injection can append arbitrary BCC/CC recipients.
 
 ## References
 

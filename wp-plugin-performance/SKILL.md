@@ -5,7 +5,7 @@ compatibility: "WordPress 6.0+ / PHP 7.4+. Applies to plugins and custom code."
 license: GPL-2.0-or-later
 metadata:
   author: fernando-tellado
-  version: "1.0"
+  version: "1.1"
 ---
 
 # WordPress plugin performance
@@ -165,22 +165,84 @@ $query = new WP_Query( array(
 ) );
 ```
 
-### Post exclusion patterns
+### Legitimate `meta_query` uses
+
+Some lookups are unavoidably keyed by post meta because that is where the data lives (Privacy API exporters/erasers keyed by customer email, WooCommerce order number resolvers that respect plugins like Sequential Order Numbers, etc.). For these, the `WordPress.DB.SlowDBQuery.slow_db_query_meta_query` warning is informational, not a security issue, and the manual reviewer accepts it with a short justification:
 
 ```php
-// WRONG: Large post__not_in arrays are slow
 $query = new WP_Query( array(
-    'post__not_in' => $hundreds_of_ids, // Slow!
+    'post_type'  => 'ayudawp_withdrawal',
+    'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Privacy API exporter contract requires lookup by stored customer email.
+        array(
+            'key'   => '_ayudawp_email',
+            'value' => $email,
+        ),
+    ),
 ) );
-
-// CORRECT: Fetch all, filter in PHP (faster for large exclusions)
-$posts = get_posts( array(
-    'posts_per_page' => 100,
-    'fields'         => 'ids',
-) );
-
-$filtered = array_diff( $posts, $excluded_ids );
 ```
+
+The justification text matters: state *why* the meta_query is the right tool here (a contract from another API, a third-party numbering scheme, etc.). A bare `phpcs:ignore` without comment looks lazy and triggers extra scrutiny.
+
+### Post and term exclusion patterns
+
+Plugin Check (and PHPCS WPVIP rules) flag every exclusionary argument: `post__not_in`, `exclude`, `category__not_in`, `tag__not_in`, `author__not_in`. The wp.org review pipeline surfaces the warning even when the input set is tiny. Refactor to "fetch a slightly larger window, filter in PHP, cap at the desired count":
+
+```php
+// WRONG: post__not_in on a query that can grow
+$query = new WP_Query( array(
+    'post__not_in'   => $hundreds_of_ids,
+    'posts_per_page' => 20,
+) );
+
+// CORRECT: fetch more, filter, cap.
+$candidates = get_posts( array(
+    'posts_per_page' => 60, // 3x desired so the filter rarely empties the list
+    'fields'         => 'ids',
+    'no_found_rows'  => true,
+) );
+
+$results = array();
+foreach ( $candidates as $id ) {
+    if ( in_array( $id, $excluded_ids, true ) ) {
+        continue;
+    }
+    $results[] = $id;
+    if ( count( $results ) >= 20 ) {
+        break;
+    }
+}
+```
+
+Same pattern applies to `get_terms()` with `exclude`:
+
+```php
+// WRONG: exclude param on get_terms()
+$terms = get_terms( array(
+    'taxonomy'   => 'product_cat',
+    'number'     => 20,
+    'exclude'    => $excluded_ids,
+) );
+
+// CORRECT: ask for more, filter in PHP, cap.
+$candidates = get_terms( array(
+    'taxonomy'   => 'product_cat',
+    'hide_empty' => false,
+    'number'     => 40,
+) );
+
+$results = array();
+foreach ( $candidates as $term ) {
+    if ( in_array( (int) $term->term_id, $excluded_ids, true ) ) {
+        continue;
+    }
+    $results[] = $term;
+    if ( count( $results ) >= 20 ) {
+        break;
+    }
+}
+```
+
+The PHP loop is cheap (small bounded window) and the SQL query no longer carries a `NOT IN (...)` clause that scales linearly with the exclusion list.
 
 ### Direct database queries
 
@@ -1079,6 +1141,8 @@ function ayudawp_add_server_timing() {
 - [ ] No `query_posts()` usage
 - [ ] Input validated before querying (no falsy IDs)
 - [ ] Meta queries replaced with taxonomies where possible
+- [ ] No `post__not_in`, `exclude`, `category__not_in`, `author__not_in` on queries that can grow — use "fetch wider window + filter in PHP + cap"
+- [ ] Unavoidable `meta_query` calls have a one-line `phpcs:ignore` justification, not a silent suppression
 
 ### Caching
 
