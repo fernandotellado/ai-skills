@@ -21,7 +21,7 @@ Textos completos con la versión IA y su versión humanizada. Cada ejemplo seña
 
 ### Versión humanizada
 
-> WordPress lo usa el 43% de las webs del planeta, y no es casualidad. Empezó como plataforma de blogs, pero hoy sirve para montar desde una tienda online con WooCommerce hasta una aplicación web a medida. Es flexible, fácil de usar y tiene una comunidad enorme detrás. Eso sí, para sacarle todo el jugo necesitas conocer algunas buenas prácticas.
+> WordPress lo usa el 43% de las webs del planeta, y no es casualidad. Empezó como plataforma de blogs, pero hoy sirve para montar una tienda online con WooCommerce o una aplicación web a medida. Es flexible, fácil de usar y tiene una comunidad enorme detrás. Eso sí, para sacarle todo el jugo necesitas conocer algunas buenas prácticas.
 
 **Cambios aplicados:**
 - Dato concreto en lugar de generalización ("43% de las webs")

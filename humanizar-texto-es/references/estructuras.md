@@ -10,7 +10,7 @@ La IA tiende a escribir frases cortas encadenadas con punto y seguido, imitando 
 > Te cuento una cosa que igual no sabías. En el primer trimestre de 2025, Cloudflare paró 20,5 millones de ataques DDoS. Eso es casi tanto como en todo 2024. Y la cosa no va a menos.
 
 **Versión natural:**
-> Te cuento una cosa que igual no sabías, y es que en el primer trimestre de 2025 Cloudflare paró 20,5 millones de ataques DDoS, casi tantos como en todo 2024 junto, y la cosa no va a menos.
+> Te cuento una cosa que igual no sabías, y es que en el primer trimestre de 2025 Cloudflare paró 20,5 millones de ataques DDoS, casi tantos como en todo 2024. Y la cosa no va a menos.
 
 **Otro ejemplo IA:**
 > Un buen hosting te pone el trabajo más fácil. Tienen WAF propio. Detectan anomalías. El soporte reacciona rápido.
@@ -28,11 +28,13 @@ La IA tiende a escribir frases cortas encadenadas con punto y seguido, imitando 
 
 **Cuándo sí funciona la frase corta:** para cerrar un párrafo con contundencia, para marcar una conclusión, para un dato seco que quieres destacar, para un cambio de ritmo puntual. Pero una o dos por párrafo, no cuatro seguidas.
 
+**No te pases al otro extremo.** Unir no es encadenarlo todo. Si al juntar frases te sale una oración de más de 30-35 palabras con tres o más «y», «que» o «porque» enganchados, tienes una frase-río, que es otro patrón de IA igual de delator. El objetivo es alternar largas y cortas, no pasar de todo-corto a todo-largo. Mira el ejemplo de arriba: tres ideas van juntas en una frase y la cuarta queda suelta y corta para rematar.
+
 **Truco de revisión:** lee el párrafo mentalmente en voz alta. Si suena entrecortado, a martillazos, o a traducción literal del inglés, tienes fragmentación de más.
 
 ## Exceso de comas tras complementos iniciales
 
-La IA mete una coma automática después de cualquier cosa que aparezca al principio de la frase antes del verbo principal. En español esa coma solo es obligatoria cuando el complemento es largo (más de cuatro o cinco palabras) o cuando hay ambigüedad sin ella. En complementos cortos, la coma entorpece la lectura y suena a escritura administrativa innecesaria.
+La IA mete una coma automática después de cualquier cosa que aparezca al principio de la frase antes del verbo principal. En español esa coma solo es obligatoria cuando el complemento es largo (5 palabras o más) o cuando hay ambigüedad sin ella. En complementos cortos, la coma entorpece la lectura y suena a escritura administrativa innecesaria.
 
 **Lo que hace la IA:**
 > Antes de ponerte nervioso, confirma que es un ataque real.
@@ -53,9 +55,9 @@ La IA mete una coma automática después de cualquier cosa que aparezca al princ
 > Si tienes configurado Cloudflare en modo proxy con reglas WAF personalizadas, mételo en modo bajo ataque.
 > Después de revisar los logs y confirmar que el patrón es anómalo, actúa con las medidas de este artículo.
 
-**Regla:** con complementos iniciales cortos (menos de 5 palabras) elimina la coma. Con complementos largos o que incluyen subordinadas, la coma sí es correcta y ayuda a la lectura.
+**Regla:** con complementos iniciales de 4 palabras o menos, elimina la coma. Con 5 palabras o más, o si incluyen una subordinada o hay ambigüedad, la coma sí es correcta y ayuda a la lectura.
 
-**Truco de revisión:** lee la frase en voz alta. Si no haces una pausa natural en ese punto, la coma sobra.
+**Truco de revisión:** mira qué es el complemento. Si es un adverbio o un sintagma breve (primero, después, al final, en casa, por la mañana), sin coma. Si es una subordinada o un sintagma de 5 palabras o más, con coma. Como apoyo, léelo mentalmente: si no haces una pausa natural en ese punto, la coma sobra.
 
 ## Contraste negativo
 
@@ -101,7 +103,7 @@ La IA formula una pregunta y la responde en la frase siguiente. Es un recurso qu
 **Versión natural:**
 > Las ventas subieron un 30%.
 > Es importante porque afecta a todos.
-> La constancia marca la diferencia.
+> Lo que funciona es la constancia.
 
 **Regla:** elige pregunta o afirmación. No las combines como fórmula repetida.
 
@@ -148,7 +150,7 @@ La IA necesita recapitular al final de cada sección, incluso cuando el texto es
 **Versión natural:**
 > (El mismo párrafo de 4 líneas, sin el cierre. Se ha entendido que es fácil.)
 
-**Regla:** no recapitules salvo en textos de más de 1.500 palabras donde realmente ayude al lector. Si el párrafo anterior ya lo deja claro, no repitas.
+**Regla:** no recapitules por rutina. Solo en textos largos (orientativamente, a partir de ~1.500 palabras) y solo si el cierre aporta algo nuevo que ayude al lector. Si el párrafo anterior ya lo deja claro, no repitas.
 
 ## Falsos rangos
 
@@ -241,6 +243,24 @@ Lo anterior no significa que los dos puntos sean siempre bienvenidos. Dentro de 
 - **En prosa corrida:** evítalos para enumerar o explicar, es patrón IA en español.
 - **En listas concepto-explicación:** úsalos con normalidad, es el formato estándar español.
 
+## Punto y coma (;) en exceso
+
+La IA abusa del punto y coma para unir oraciones, igual que se hace en inglés. En español del día a día se usa poco: lo natural suele ser una coma, un punto y seguido o un enlace con «y». No es que el punto y coma esté mal —tiene sus usos—, es que la IA lo pone donde una persona pondría otra cosa.
+
+**Lo que hace la IA:**
+> El plugin detecta el ataque; bloquea las IP; avisa por correo.
+> WordPress es flexible; por eso lo usa tanta gente.
+
+**Versión natural:**
+> El plugin detecta el ataque, bloquea las IP y avisa por correo.
+> WordPress es flexible, así que lo usa mucha gente.
+
+**Cuándo sí vale el punto y coma:** para separar elementos de una enumeración cuando esos elementos ya llevan comas dentro («Madrid, la capital; Barcelona, en la costa; y Sevilla, en el sur»), o para unir dos oraciones muy relacionadas donde el punto cortaría demasiado y la coma se quedaría corta. Son usos legítimos; no los toques.
+
+**Regla:** no uses el punto y coma como recurso por defecto para encadenar frases. Cámbialo por coma, punto y seguido o «y» según el caso. Pero no te vayas al otro extremo: si está bien puesto (enumeración compleja, dos oraciones muy ligadas), déjalo. Se trata de moderar, no de erradicar.
+
+**Truco de revisión:** cuenta los punto y coma del texto. Si hay más de uno o dos cada varios párrafos, o si separan frases cortas que pedirían coma o punto, sobran.
+
 ## Formato excesivo
 
 La IA pone en negrita términos clave de forma mecánica, como si fuera un libro de texto. También abusa de los encabezados en textos cortos.
@@ -252,6 +272,26 @@ La IA pone en negrita términos clave de forma mecánica, como si fuera un libro
 > Aquí es donde entra el object caching, que guarda los datos en memoria para que el sitio cargue más rápido.
 
 **Regla:** la negrita es para enfatizar algo que realmente lo necesita, no para marcar cada término técnico o palabra clave. La excepción son las listas concepto-explicación, donde el concepto va en negrita por convención (ver sección correspondiente).
+
+## Capitalización de titulares
+
+En inglés los titulares se escriben con casi todas las palabras en mayúscula inicial (*How To Speed Up Your Site*). La IA arrastra esa costumbre al español y escribe «Cómo Acelerar Tu Sitio Web», que en español es incorrecto. Pero ojo, porque al corregirlo se cae a menudo en el error contrario: dejar el titular entero en minúscula, incluida la primera letra, que también está mal.
+
+En español la norma es la misma que en cualquier frase: **en un titular solo van en mayúscula la primera letra y los nombres propios** (y las siglas). El resto, en minúscula.
+
+Tres casos, para que se vea claro:
+
+| Cómo lo escribe | Ejemplo | ¿Correcto? |
+|-----------------|---------|------------|
+| Mayúscula en cada palabra (estilo inglés) | Cómo Optimizar Tu WordPress Para SEO | No: es calco del inglés |
+| Todo en minúscula | cómo optimizar tu wordpress para seo | No: faltan la mayúscula inicial y los nombres propios |
+| Mayúscula inicial + nombres propios | Cómo optimizar tu WordPress para SEO | Sí |
+
+Fíjate en que «WordPress» y «SEO» mantienen su grafía en los tres casos: los nombres propios y las siglas no se tocan.
+
+**Regla:** en titulares, subtítulos (H1-H6), asuntos de correo y cualquier rótulo, mayúscula solo en la primera letra y en los nombres propios. Ni mayúscula en cada palabra ni todo en minúsculas.
+
+**Truco de revisión:** mira la segunda y la tercera palabra del titular. Si están en mayúscula sin ser nombres propios, es estilo inglés: pásalas a minúscula. Y comprueba que la primera letra del titular sí va en mayúscula.
 
 ## Apertura con definición de diccionario
 

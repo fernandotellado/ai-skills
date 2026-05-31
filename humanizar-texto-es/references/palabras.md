@@ -2,11 +2,11 @@
 
 Lista de palabras, expresiones y construcciones sobreutilizadas por la IA en español de España. Cada entrada incluye alternativas naturales.
 
-No se trata de prohibir palabras de forma absoluta. Si una palabra de la lista es la más precisa en un contexto concreto, puede usarse. Lo que se evita es el uso recurrente, automático y desproporcionado que delata texto generado por máquina.
+Con una única excepción —la lista de «prohibición absoluta» que abre el archivo—, estas listas no son cerradas. Si una palabra es la más precisa en un contexto concreto, puede usarse. Lo que se evita es el uso recurrente, automático y desproporcionado que delata texto generado por máquina.
 
 ## Palabras de prohibición absoluta
 
-Estas palabras o expresiones no deben usarse nunca. Están tan asociadas al texto IA o resultan tan artificiales en español natural que siempre hay una alternativa mejor.
+Esta es la única lista cerrada del archivo: aquí no hay excepción de contexto. Estas palabras o expresiones no deben usarse nunca. Están tan asociadas al texto IA o resultan tan artificiales en español natural que siempre hay una alternativa mejor.
 
 | Prohibida | Alternativas |
 |-----------|-------------|
@@ -14,12 +14,11 @@ Estas palabras o expresiones no deben usarse nunca. Están tan asociadas al text
 | fricción | problema, obstáculo, resistencia, lío |
 | granular, granularidad | detallado, en detalle, al milímetro, con lupa |
 | epítome | ejemplo perfecto, la definición misma de |
-| inquebrantable | firme, constante, que no se rinde |
+| inquebrantable | firme, constante, que no cede |
 | vibrante | animado, vivo, con vidilla |
-| crucial | importante, clave, que marca la diferencia |
-| indeleble | que no se borra, permanente, que deja huella |
+| crucial | importante, clave, decisivo, determinante |
+| indeleble | que no se borra, permanente, imborrable |
 | desbloquear | conseguir, abrir, activar, lograr |
-| por qué importan (como título) | reescribir como afirmación directa |
 
 ## Aperturas predecibles
 
@@ -184,6 +183,11 @@ La IA abusa de adverbios que aportan poco.
 | particularmente | sobre todo, especialmente |
 | genuinamente | de verdad, de forma auténtica |
 | inherentemente | por naturaleza, de por sí |
+| honestamente / sinceramente | (eliminar; rara vez aporta) |
+| evidentemente / obviamente | (eliminar; presupone acuerdo o suena condescendiente) |
+| afortunadamente / lamentablemente | por suerte / por desgracia, o eliminar |
+| curiosamente / sorprendentemente | "lo curioso es que…", o eliminar |
+| sin lugar a dudas | (eliminar; afirmar directamente) |
 
 ## Verbos comodín
 
@@ -201,3 +205,82 @@ Verbos que la IA repite porque sirven para todo pero no dicen nada concreto.
 | canalizar | dirigir, orientar |
 | materializar | hacer realidad, conseguir, lograr |
 | conceptualizar | pensar, diseñar, plantear |
+
+## Calcos del inglés
+
+Construcciones traducidas casi literalmente del inglés. La IA tira de ellas porque entrena con muchísimo texto en inglés; en español suenan importadas. (Las que son frases-gancho —"imagina que…", "sigue leyendo"— están en [ganchos.md](ganchos.md); aquí van las locuciones.)
+
+| Calco (origen) | Alternativas naturales |
+|----------------|------------------------|
+| cuando se trata de (when it comes to) | en cuanto a, a la hora de, con/para, o reformular |
+| al final del día (at the end of the day) | al fin y al cabo, a fin de cuentas, en el fondo |
+| asegúrate de (que) (make sure to) | comprueba que, no olvides, que no se te olvide |
+| en términos de (in terms of) | en cuanto a, en lo relativo a, o concretar |
+| una amplia gama de / un amplio abanico de | muchos, varios, todo tipo de |
+| aquí está la cosa / esta es la cosa (here's the thing) | te explico, lo que pasa es que, la cosa es que |
+| el hecho de que (the fact that) | que (a secas) |
+| accionable (actionable) | práctico, que puedes aplicar, concreto |
+| en el corazón de (at the heart of) | en el centro de, lo esencial de |
+| dar un paso atrás (take a step back) | parar a pensar, verlo con perspectiva |
+| hacer la diferencia (make the difference) | marcar la diferencia (forma correcta en español) |
+| mover la aguja (move the needle) | cambiar las cosas, notarse de verdad |
+
+## Verbos y expresiones de elevación
+
+La IA empuja al lector con verbos de superación y aventura, calcados del marketing motivacional. Suenan a folleto. Di qué se hace, no lo épico que es.
+
+| Evitar | Alternativas |
+|--------|-------------|
+| sumérgete / sumérgete en (dive into) | métete en, entra en, vamos a ver |
+| embárcate (en un viaje, en esta aventura) | empieza, ponte con |
+| adéntrate en | entra en, métete en |
+| elevar (eleva tu marca, eleva tu contenido) | mejorar, subir el nivel de |
+| llevar al siguiente nivel / al próximo nivel | mejorar, darle una vuelta, o concretar |
+| abrazar (el cambio, la tecnología) (embrace) | adoptar, aceptar, ponerse al día con |
+| desata / libera (todo el potencial) (unleash) | aprovecha, saca partido, o eliminar |
+| domina X en N pasos (master) | aprende a, manéjate con |
+| transforma tu… / potencia tu… (como gancho) | cambia, mejora |
+| manos a la obra (como cierre) | vamos a ello (con moderación) o eliminar |
+
+El "viaje" como metáfora ("tu viaje hacia X", "el viaje de aprendizaje") calca *journey*. Mejor "proceso", "camino" o quitarlo.
+
+## Cuantificadores vagos
+
+La IA finge amplitud sin dar cifras. Si sabes cuántos, di el número; si no, usa un cuantificador llano.
+
+| Evitar | Alternativas |
+|--------|-------------|
+| diversos / diversas (diversos factores) | varios, algunos, o el número exacto |
+| múltiples | varios, muchos |
+| una serie de | varias, unas cuantas, o concretar |
+| un sinfín de / un sinnúmero de | muchísimos, un montón de |
+| diferentes (diferentes opciones, como "varias") | distintas, varias |
+| numerosos / numerosas | muchos |
+| una amplia variedad de / toda una variedad de | muchos tipos de, de todo tipo |
+| todo un mundo de (posibilidades) | eliminar |
+| infinidad de / innumerables | un montón de, muchísimos |
+
+## Palabras de uso recurrente (modera, no elimines)
+
+**Atención: estas palabras son español normal y correcto.** No están prohibidas y no hay que borrarlas. El problema no es la palabra, es el piloto automático: la IA las repite como relleno vago o como adjetivo de marketing sin contenido. La regla aquí no es "quítala", es **"que se la gane"**: úsala cuando sea precisa y aporte, no por inercia. Si puedes cambiarla por algo más concreto, hazlo; si no hay nada más concreto, déjala.
+
+| Palabra | Uso que delata (relleno, evítalo) | Uso legítimo (resérvala para esto) |
+|---------|-----------------------------------|------------------------------------|
+| solución | "nuestra solución", "la solución perfecta" | "la solución al error 500 es…", o el nombre concreto |
+| experiencia | "una experiencia única / inolvidable / fluida" | "diez años de experiencia", "la experiencia de compra" |
+| ideal | "la solución ideal", "ideal para ti" | "el plugin ideal para tiendas pequeñas, porque…" |
+| perfecto | "la opción perfecta", "el momento perfecto" | "perfecto para empezar" (puntual), o sentido literal |
+| potente / poderoso | "una herramienta potente / poderosa" | "un servidor potente, con 32 GB de RAM" (medible) |
+| versátil | "una solución versátil" | mejor: describe para cuántas cosas sirve |
+| intuitivo | "interfaz intuitiva" | "se entiende sin manual", si de verdad lo razonas |
+| esencial / imprescindible | "es esencial", "imprescindible para…" | cuando sin eso de verdad no funciona |
+| clave / claves | "la clave del éxito", "las 5 claves de…" | "la pieza clave del sistema" (puntual) |
+| valor / aportar valor | "aporta valor", "aporta mucho valor" | concreta el valor: "te ahorra dos horas a la semana" |
+| potencial | "todo su potencial", "desata tu potencial" | "tiene potencial para crecer" (puntual) |
+| sin esfuerzo | "sin esfuerzo", "sin complicaciones" | di cuánto cuesta de verdad, o "sin complicarte" |
+| realmente | "realmente importante", "realmente útil" | contraste real: "no me lo creía, pero realmente va" |
+| simplemente | "simplemente funciona", "simplemente genial" | sentido de "solo": "pulsa simplemente el botón verde" |
+| literalmente | como énfasis ("literalmente increíble") | sentido literal: "literalmente se cayó el servidor" |
+| básicamente | muletilla de resumen ("básicamente, es esto") | cuando de verdad reduces algo a lo básico |
+
+**No cambies unas muletillas por otras (las tuyas incluidas).** Al reescribir tirarás de unos cuantos recursos cómodos: "y es que", "y no es casualidad", "eso sí", "lo cierto es que", "darle un empujón". Sueltos están bien. Pero si los repites en cada párrafo se vuelven tan delatores como las muletillas que estás quitando. Varía también las costuras.
