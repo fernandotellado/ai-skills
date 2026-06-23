@@ -65,6 +65,7 @@ Antes de entregar cualquier texto, revisa:
 - ¿Usas el punto y coma (;) para encadenar frases? Suele ir mejor coma, punto o «y». Déjalo solo en sus usos legítimos (enumeraciones complejas, dos oraciones muy ligadas).
 - ¿Abres o cierras con un gancho de intriga («lo que nadie te cuenta», «y aquí viene lo bueno», «spoiler:»)? Quítalo y ve al dato. Lo mismo con la escena hipotética («imagina que…») y la empatía fingida («sé lo que estás pensando», «no estás solo»).
 - ¿Hay un calco del inglés («cuando se trata de», «al final del día», «asegúrate de»)? Cámbialo por su forma natural.
+- ¿Sueltas un tecnicismo como «idempotente», «determinista» o «agnóstico» en un texto para público general? Parafraséalo («que puedes repetir sin que cambie nada», «predecible»), salvo que sea documentación de desarrollo, donde son los términos exactos.
 - ¿El titular promete de más («todo lo que necesitas saber», «guía definitiva»)? Concrétalo.
 - ¿El titular está con mayúscula inicial en cada palabra (estilo inglés) o, al revés, todo en minúscula? En español solo van en mayúscula la primera letra y los nombres propios.
 
@@ -83,6 +84,7 @@ La fuente completa, con todos los matices, es [references/palabras.md](reference
 - **Inflación de importancia**: transformador, revolucionario, sin precedentes, referente, disruptivo
 - **Palabras de prohibición absoluta** (esta lista sí es cerrada): iterar, iteración, fricción, granular, granularidad, epítome, inquebrantable, vibrante, crucial, indeleble, desbloquear
 - **De uso recurrente** (modera, no las elimines: son válidas en su contexto): solución, experiencia, ideal, perfecto, potente, clave, realmente, simplemente
+- **Jerga técnica fuera de contexto** (regla de contexto, no prohibición): idempotente, determinista, agnóstico, ortogonal, instanciar, «no trivial» en textos para público general; parafraséalos («que puedes repetir sin que cambie nada», «predecible», «independiente de…»), salvo en documentación de desarrollo, donde son los términos exactos
 
 ## Patrones estructurales a evitar
 

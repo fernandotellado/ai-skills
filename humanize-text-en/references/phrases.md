@@ -218,3 +218,18 @@ Verbs AI repeats because they fit everything but say nothing specific.
 | bolster | support, strengthen, back up |
 | foster | grow, encourage, build |
 | mitigate | reduce, lessen, limit |
+
+## Technical jargon out of context
+
+Correct technical terms that AI drops into writing for a general audience, where they read like machine pedantry. The textbook case is **idempotent**: in computing it means an operation gives the same result whether you run it once or many times, but almost nobody writes or reads it in an article or a guide for normal users. The rule here is context, not a ban: in developer documentation (REST verbs like PUT or DELETE, migrations, scripts, object-oriented code) these are the exact terms a programmer expects, so keep them there. Anywhere else, paraphrase.
+
+| Term | Paraphrase it as (general prose) | Keep it only if… |
+|------|----------------------------------|------------------|
+| idempotent, idempotency | "you can run it again and nothing changes", "same result whether you do it once or ten times", "repeating the call changes nothing", "safe to repeat" | developer docs: REST, migrations, IaC |
+| deterministic | "always gives the same result for the same input", "predictable", "no randomness" | algorithms, reproducible builds, automata |
+| agnostic (platform-, X-) | "platform-independent", "works with any X", "doesn't care which X you use" | technical architecture where it's the settled term (and even then "independent" is usually clearer) |
+| orthogonal | "independent", "they don't affect each other", "unrelated" | math (perpendicular) or software design where it genuinely means independence |
+| instantiate | "create (an object)", "create an instance of" | object-oriented programming, talking to programmers |
+| non-trivial | "tricky", "not simple", "takes real work" | proofs or math contexts where it's the term |
+
+Quick rule: if the reader isn't a programmer, say it in plain English.

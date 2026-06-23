@@ -56,6 +56,7 @@ Before delivering any text, run through these:
 - Trailing -ing clause adding vague significance ("contributing to...", "highlighting the...")? Rewrite with a finite verb.
 - Bold on every key term like a textbook? Remove most of it.
 - Emoji bullets (💡🚀✅) organizing your points? Remove them entirely.
+- Dropping a technical term like "idempotent", "deterministic", or "agnostic" into general-audience text? Paraphrase it ("you can run it again and nothing changes", "predictable"), unless it's developer documentation, where it's the exact term.
 
 ## Banned words and phrases
 
@@ -66,6 +67,7 @@ See the full list in [references/phrases.md](references/phrases.md), which cover
 - **Emphasis crutches**: "Here's the thing:", "Let that sink in.", "Full stop.", "This matters because"
 - **Wrap-up clichés**: "In conclusion", "At the end of the day", "The future looks bright"
 - **Significance inflation**: groundbreaking, game-changing, transformative, revolutionary, unprecedented
+- **Technical jargon out of context** (context rule, not a ban): idempotent, deterministic, agnostic, orthogonal, instantiate, non-trivial in general-audience text; paraphrase them ("you can run it again and nothing changes", "predictable", "platform-independent"), except in developer docs where they're the exact terms
 
 ## Structural patterns to avoid
 

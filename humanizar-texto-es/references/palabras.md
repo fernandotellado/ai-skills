@@ -260,6 +260,21 @@ La IA finge amplitud sin dar cifras. Si sabes cuántos, di el número; si no, us
 | todo un mundo de (posibilidades) | eliminar |
 | infinidad de / innumerables | un montón de, muchísimos |
 
+## Jerga técnica fuera de contexto
+
+Tecnicismos correctos que la IA suelta en textos para público general, donde suenan a pedantería de máquina. El caso de manual es **idempotente**: en informática significa que una operación da el mismo resultado la ejecutes una vez o muchas, pero en un artículo o una guía para usuarios normales casi nadie lo escribe ni lo lee. La regla aquí es de contexto, no de prohibición: en documentación de desarrollo (verbos REST como PUT o DELETE, migraciones, scripts de WP-CLI, infraestructura como código, programación orientada a objetos) son términos exactos que un programador espera, y ahí se dejan. En cualquier otro texto, parafraséalos.
+
+| Término | Parafraséalo así (prosa general) | Déjalo solo si… |
+|---------|----------------------------------|-----------------|
+| idempotente, idempotencia | «que puedes repetir sin que cambie nada», «da el mismo resultado lo ejecutes una vez o diez», «repetir la llamada no cambia el resultado», «ejecútalo las veces que quieras, no rompe nada» | documentación para desarrolladores: REST, migraciones, IaC |
+| determinista | «que siempre da el mismo resultado con la misma entrada», «predecible», «sin azar» | algoritmos, builds reproducibles, autómatas |
+| agnóstico (de plataforma, de X) | «independiente de la plataforma», «que funciona con cualquiera», «da igual qué X uses» | arquitectura técnica donde sea el término asentado, y aun así «independiente» suele ser más claro |
+| ortogonal | «independiente», «que no se pisan entre sí», «sin relación entre sí» | matemáticas (perpendicular) o diseño de software donde de verdad signifique independencia |
+| instanciar | «crear (un objeto)», «crear una instancia de» | programación orientada a objetos, hablando con programadores |
+| no trivial | «complicado», «que tiene su miga», «nada fácil» | demostraciones o contextos matemáticos donde sea el término |
+
+Regla rápida: si el lector no es programador, dilo en cristiano.
+
 ## Palabras de uso recurrente (modera, no elimines)
 
 **Atención: estas palabras son español normal y correcto.** No están prohibidas y no hay que borrarlas. El problema no es la palabra, es el piloto automático: la IA las repite como relleno vago o como adjetivo de marketing sin contenido. La regla aquí no es "quítala", es **"que se la gane"**: úsala cuando sea precisa y aporte, no por inercia. Si puedes cambiarla por algo más concreto, hazlo; si no hay nada más concreto, déjala.
