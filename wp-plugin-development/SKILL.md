@@ -1,11 +1,11 @@
 ---
 name: wp-plugin-development
-description: "Architecture and development guidelines for WordPress plugins published on wordpress.org: file structure, plugin header, lifecycle hooks, Settings API, admin UI, custom post types, custom database tables, internationalization, plugin dependencies, and wordpress.org submission requirements. Based on the official WordPress Plugin Developer Handbook and Plugin Review Team guidelines."
+description: "Architecture and development guidelines for WordPress plugins published on wordpress.org: file structure, plugin header, lifecycle hooks, Settings API, admin UI, escaping helpers for admin JavaScript, default values and option migrations, multisite-shared resources, custom post types, custom database tables, internationalization, plugin dependencies, and wordpress.org submission requirements. Based on the official WordPress Plugin Developer Handbook and Plugin Review Team guidelines."
 compatibility: "WordPress 6.0+ / PHP 7.4+. Targets plugins for distribution on wordpress.org."
 license: GPL-2.0-or-later
 metadata:
   author: fernando-tellado
-  version: "1.2"
+  version: "1.3"
 ---
 
 # WordPress plugin development
@@ -177,6 +177,34 @@ register_deactivation_hook( MYPLUGIN_FILE, array( 'My_Plugin', 'deactivate' ) );
 // Kick off.
 My_Plugin::get_instance();
 ```
+### Escaping helpers in your admin JavaScript
+
+Any script that builds HTML by concatenation needs an escaping helper, and the helper is part of the plugin's architecture, not a detail of one file. Decide it once, at the start, because retrofitting it later means auditing every call site.
+
+```javascript
+// This does NOT encode quotes. Correct for text, unsafe inside an attribute.
+function escHtml( s ) {
+    var d = document.createElement( 'div' );
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+// This does. Safe in any position.
+function escAttr( s ) {
+    if ( s === null || typeof s === 'undefined' ) { return ''; }
+    return String( s )
+        .replace( /&/g, '&amp;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' )
+        .replace( /"/g, '&quot;' ).replace( /'/g, '&#039;' );
+}
+```
+
+Two conventions that prevent the whole class of bug:
+
+- **Either a single helper that is safe in attribute position, or two with explicit names.** A lone `escapeHtml()` used both inside `<td>` and inside `value="…"` is a bug waiting for its context.
+- **Pick the helper by the output context, not by trusting the origin.** A translated label inside an attribute goes through `escAttr()` just like user data, because what changes over time is who calls the renderer, not what the renderer escapes.
+
+See the security skill for the full reasoning; this is the architectural half of it.
+
 ### Asset loading rules
 
 WordPress plugins must load all JavaScript and CSS through the enqueue API using external files. Printing `<script>` or `<style>` tags directly in PHP output is forbidden — it bypasses WordPress dependency management, breaks Content Security Policy headers, prevents caching and deduplication, and is flagged by the Plugin Review Team.
@@ -246,6 +274,8 @@ The only acceptable way to add small amounts of dynamic CSS or JS is through `wp
 ### Activation hook
 
 Runs when the plugin is activated. Use it to create database tables, set default options, and schedule cron events.
+
+**Careful with anything you write outside your own tables and options.** Activation runs with `activate_plugins`, which on a multisite network the network administrator can delegate to every subsite administrator with a native checkbox (Network Settings, Menu Settings, Plugins). If activation writes `wp-config.php`, the root `.htaccess` or the root `robots.txt`, one site is rewriting what the whole network reads, and the plugin may not even be active on the sites that suffer it. Gate those writes with `is_multisite() ? current_user_can( 'manage_network_options' ) : current_user_can( 'manage_options' )`, and prefer the virtual route when WordPress offers one: the `robots_txt` filter is per site, the physical file is not.
 
 ```php
 // CORRECT: Activation - set up what the plugin needs to run
@@ -370,6 +400,28 @@ If you genuinely need a safeguard for legacy installation folders (e.g. users wh
 | `uninstall.php` | On plugin deletion | Delete all options, tables, user meta |
 | `plugins_loaded` | Every request, after plugins load | Initialize plugin classes |
 | `init` | Every request | Register CPTs, taxonomies, shortcodes |
+
+### Defaults are product decisions, and sometimes security decisions
+
+The value a plugin ships with is the value almost every install will run forever. Two consequences that are easy to miss:
+
+- **A protection that ships disabled protects nobody.** In one audited plugin the correct reverse-DNS verification of search engine bots was written, working and switched off by default, while the feature it was supposed to secure was switched on: the "private site" mode opened for anyone sending `User-Agent: Googlebot`. The code was right, the default was the vulnerability.
+- **Changing a default does not reach existing installs.** If activation persisted the whole defaults array into an option, `wp_parse_args()` will never restore the new value, because the old one is stored. The change only affects fresh installs unless you migrate.
+
+```php
+// Migrate with a version option, never with a transient: a transient expires and
+// the routine runs again, which is how a user's deliberate choice gets overwritten.
+if ( (int) get_option( 'myplugin_settings_version', 0 ) < 2 ) {
+    $settings = get_option( 'myplugin_settings', array() );
+    if ( is_array( $settings ) && empty( $settings['verify_bots'] ) ) {
+        $settings['verify_bots'] = true;
+        update_option( 'myplugin_settings', $settings );
+    }
+    update_option( 'myplugin_settings_version', 2 );
+}
+```
+
+Say it in the changelog too. A default that flips is a behaviour change, and users who relied on the old one deserve to read about it before they update rather than after.
 
 ## Main plugin class
 
@@ -553,6 +605,8 @@ Same pattern applies to any filter named after a specific hook context: `the_con
 ## Settings API
 
 The Settings API handles validation, storage, and security for plugin options. Never save options manually with `$_POST`.
+
+**And remember what a saved option can trigger.** Hooking `update_option_<name>` to write a file is a common and useful pattern, but the option is per site while the file may not be. On a network, an administrator of any subsite saving their own settings can rewrite the root `.htaccess` or `robots.txt` that every site serves, with no capability beyond `manage_options`. If a save writes anything shared, gate it, tell the user why the control is unavailable instead of failing silently, and consider not registering the hook at all on subsites.
 
 ### Complete Settings API implementation
 

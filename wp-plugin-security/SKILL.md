@@ -1,11 +1,11 @@
 ---
 name: wp-plugin-security
-description: "Security guidelines for WordPress plugin development: sanitization, validation, escaping, nonces, capabilities, SQL injection prevention, XSS protection, and CSRF mitigation. Based on official WordPress Developer Resources."
+description: "Security guidelines for WordPress plugin development: sanitization, validation, escaping (in PHP and in admin JavaScript), nonces, capabilities over objects, multisite privilege boundaries, SQL injection prevention, XSS protection, and CSRF mitigation. Use it when writing or reviewing any plugin code that handles user input, prints dynamic output, registers AJAX or REST endpoints, checks permissions, writes files shared by a network, or suppresses PHPCS security sniffs. Based on official WordPress Developer Resources and on a post-incident review of CVE-2026-81754."
 compatibility: "WordPress 6.0+ / PHP 7.4+. Applies to plugins, themes, and custom code."
 license: GPL-2.0-or-later
 metadata:
   author: fernando-tellado
-  version: "1.1"
+  version: "1.2"
 ---
 
 # WordPress plugin security
@@ -22,6 +22,13 @@ Use this skill when:
 - Creating admin pages or settings
 - Implementing AJAX or REST endpoints
 - Processing file uploads
+
+### Scope: audit the surface, not the diff
+
+Reviewing only what changed is how a flaw survives for years while every release passes its security gate. Two rules make the difference:
+
+- **If the change touches an escaper, a validator, a capability check or an `is_*_request()` helper, the unit of review is the whole function and every one of its callers**, not the lines of the diff. Ask "does this function do the right thing for all the contexts it is used in?", not "is this new value handled correctly?". In the incident behind these notes, a review looked at exactly the broken escaper, named it in the release notes and approved it, because it followed the path of the new value (which went to text position) instead of auditing the function and its other eleven uses in attribute position.
+- **A review that only follows new data cannot find old flaws.** Rotate: each review takes one whole subsystem and reads it end to end, even if nothing in it changed. And state in writing what the review did **not** cover, so the next one starts there instead of repeating the same blind spot.
 
 ## Core security principles
 
@@ -88,6 +95,7 @@ $description = sanitize_textarea_field( $_POST['description'] ?? '' );
 ### Important notes on sanitization
 
 - **Never use escape functions for sanitization** - they serve different purposes
+- **And never use sanitization as escaping, which is the direction that actually causes breaches.** No `sanitize_*` function prepares a value for a specific output context. `sanitize_text_field()` strips tags, so the value *looks* clean, but it does not touch quotes: a "sanitized" string can still close an HTML attribute and open a new one. Sanitizing is for storing, escaping is for printing, and the correct escape depends on where the value lands. Any review reasoning that stops at "this is already sanitized" has not finished
 - When using `filter_var()`, always specify a sanitizing filter (not `FILTER_DEFAULT`)
 - Process only the specific keys you need, not the entire `$_POST`/`$_GET` array
 
@@ -542,9 +550,37 @@ if ( ! current_user_can( 'manage_options' ) ) {
 | `edit_posts` | Contributor+ |
 | `publish_posts` | Author+ |
 | `edit_others_posts` | Editor+ |
-| `manage_options` | Administrator |
+| `manage_options` | Administrator **of each site** (see the multisite note below) |
 | `edit_themes` | Administrator |
 | `activate_plugins` | Administrator |
+| `manage_network_options` | Network administrator (multisite only) |
+| `manage_network_users` | Network administrator (multisite only) |
+
+### `manage_options` on multisite is not what it looks like
+
+On a network, `manage_options` is held by the administrator of **every** subsite, and those administrators are often customers, clients or colleagues who are deliberately not trusted with the whole install. So `manage_options` is the right capability for anything that belongs to one site, and the wrong one for anything shared by the network:
+
+- `wp-config.php`, and the `.htaccess` or `robots.txt` at the document root
+- network options, and any dump that follows `$wpdb->prefix` (on the main site that prefix matches every subsite table and the global user tables)
+- user accounts, which on a network belong to the network and not to one site
+
+The recipe, for anything in that list:
+
+```php
+// Shared resource: one site must not be able to rewrite what the whole network reads.
+return is_multisite()
+    ? current_user_can( 'manage_network_options' )
+    : current_user_can( 'manage_options' );
+```
+
+```php
+// Acting on somebody else's account. On single site an administrator always passes,
+// so nothing changes there; on a network map_meta_cap denies a target this user does
+// not administer, which is exactly the intent.
+if ( ! current_user_can( 'edit_user', $user_id ) ) { ... }
+```
+
+This is not a corner case. In one audited plugin, five separate handlers guarded with `manage_options` let a subsite administrator download the network `wp-config.php` (auth salts and DB credentials), read another administrator's two-factor backup codes, revoke their sessions and force a password reset on them.
 
 ### Complete security check example
 
@@ -560,21 +596,37 @@ function ayudawp_delete_item() {
         wp_die( 'Security check failed' );
     }
 
-    // 2. Check capability
-    if ( ! current_user_can( 'delete_posts' ) ) {
-        wp_die( 'You do not have permission to delete items.' );
-    }
-
-    // 3. Validate and sanitize input
+    // 2. Validate the object id first: you cannot ask for permission over an
+    //    object until you know which object it is.
     $item_id = absint( $_POST['item_id'] ?? 0 );
     if ( ! $item_id ) {
         wp_die( 'Invalid item ID' );
+    }
+
+    // 3. Check capability OVER THAT OBJECT, not in general.
+    //    delete_posts is a primitive capability and answers "may this user
+    //    delete posts at all?". delete_post is a meta capability and answers
+    //    "may this user delete THIS post?", which is the question that matters
+    //    when the id arrives in the request.
+    if ( ! current_user_can( 'delete_post', $item_id ) ) {
+        wp_die( 'You do not have permission to delete this item.' );
     }
 
     // 4. Perform action
     // ... delete logic here
 }
 ```
+
+**Primitive vs meta capabilities, and why this is the single most common authorization bug.** A handler that accepts an object id from the request and checks only a primitive capability is not authorizing anything: it is confirming that the caller is, broadly, the kind of user who does this sort of thing. `map_meta_cap()` exists to answer the specific question, and it is the one to use whenever an id travels in the request:
+
+| Instead of | Use | Because |
+|------------|-----|---------|
+| `current_user_can( 'edit_posts' )` | `current_user_can( 'edit_post', $post_id )` | The caller may edit posts, but perhaps not this one |
+| `current_user_can( 'delete_posts' )` | `current_user_can( 'delete_post', $post_id )` | Same, for deletion |
+| `current_user_can( 'edit_users' )` | `current_user_can( 'edit_user', $user_id )` | On multisite this is the difference between a site and the whole network |
+| `current_user_can( 'manage_options' )` | `current_user_can( 'edit_user', $user_id )` | `manage_options` says nothing about the target account |
+
+Sanitizing the id with `absint()` is necessary and is not authorization. A perfectly sanitized id pointing at an object the caller may not touch is exactly the shape of a real-world privilege escalation, and the clean-looking `absint()` is what makes it read as safe.
 
 ## SQL injection prevention
 
@@ -783,6 +835,83 @@ jQuery.post( myAjax.ajaxurl, {
 });
 ```
 
+### Escaping in JavaScript
+
+The PHP side of a plugin is usually reviewed. The admin JavaScript that rebuilds the same tables over AJAX usually is not, and it is a real output context with the same rules. This is where CVE-2026-81754 lived.
+
+**A helper built on the DOM does not encode quotes.** All three of these are correct for text and unsafe inside an attribute:
+
+```javascript
+// WRONG in attribute position: encodes & < > and nothing else
+function escapeHtml( text ) {
+    var div = document.createElement( 'div' );
+    div.textContent = text;
+    return div.innerHTML;
+}
+var escHtml = function ( s ) { return jQuery( '<span>' ).text( s ).html(); };   // same
+var escHtml = function ( s ) { return document.createTextNode( s ).textContent; }; // same
+```
+
+```javascript
+// CORRECT everywhere, including attributes
+function escAttr( text ) {
+    if ( text === null || typeof text === 'undefined' ) {
+        return '';
+    }
+    return String( text )
+        .replace( /&/g, '&amp;' )
+        .replace( /</g, '&lt;' )
+        .replace( />/g, '&gt;' )
+        .replace( /"/g, '&quot;' )
+        .replace( /'/g, '&#039;' );
+}
+```
+
+Three rules that follow:
+
+1. **Either one escaper that is safe in attribute position, or two with explicit names**, `escHtml()` for text and `escAttr()` for attributes. One helper called `escapeHtml()` used in both places is a bug waiting for its context.
+2. **The escape is chosen by the output context, not by trust in the origin.** A translated string in an attribute goes through `escAttr()` exactly like user data does, because what changes tomorrow is who calls the function, not what the function escapes. A renderer that is safe today because its only caller is the user's own AJAX response becomes stored XSS the day somebody moves that render to a paginated list fed from the database, and no escaping review will catch it: the escaper did not change.
+3. **Escaping quotes does not make a URL safe.** A value that lands in `href=` or `src=` still needs its scheme validated, or `javascript:` and `data:` walk straight through.
+
+Worth knowing when reviewing the server side of the same feature: `esc_attr( wp_json_encode( $data, JSON_HEX_APOS | JSON_HEX_QUOT ) )` is the correct way to put a JSON payload into an attribute in PHP. A plugin can be perfectly safe on that path and vulnerable on the JavaScript one that rebuilds the same row.
+
+### Security decisions must not rest on request data
+
+A check that decides "this request is already past authentication" by reading something the caller sends is not a check. The attacker sends it too.
+
+```php
+// WRONG: the action travels in the request, so anyone can claim to be mid-verification
+private function is_verification_request() {
+    return 'my_2fa' === ( $_REQUEST['action'] ?? '' );
+}
+```
+
+```php
+// CORRECT: server-side state for THIS user, plus the form nonce
+private function is_verification_request( $user = null ) {
+    if ( 'my_2fa' !== ( $_REQUEST['action'] ?? '' ) ) {
+        return false;
+    }
+    if ( ! isset( $_POST['_wpnonce'] )
+        || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'my_2fa_verify' ) ) {
+        return false;
+    }
+    $pending = $this->get_pending_user_id();   // stored server-side when the factor was issued
+    return $pending && ( ! $user instanceof WP_User || $pending === (int) $user->ID );
+}
+```
+
+The same idea covers user agents, referers and any `X-Forwarded-*` header: they are claims, not evidence. If a plugin opens something because the client says it is Googlebot, it opens for everybody who says it.
+
+**And when a check fails inside a `login_form_*` handler, end the request.** A bare `return` hands control back to `wp-login.php`, which falls through to its default case and calls `wp_signon()`, completing the login the check was supposed to stop:
+
+```php
+if ( ! $nonce_is_valid ) {
+    wp_safe_redirect( wp_login_url() );
+    exit;   // not: return;
+}
+```
+
 ## REST API security
 
 ```php
@@ -826,6 +955,17 @@ register_rest_route( 'myplugin/v1', '/items', array(
 - [ ] Nonces verified before processing actions
 - [ ] Capability checks performed before actions
 - [ ] Both nonce AND capability checked (not just one)
+- [ ] **Is that capability enough for what the handler touches?** Not "is there a check" but "does this check answer the right question"
+- [ ] Any object id arriving in the request is authorized **over that object** (`edit_post`, `edit_user`), not with a primitive capability
+- [ ] Anything shared by a multisite network (`wp-config.php`, root `.htaccess` or `robots.txt`, network options, dumps following `$wpdb->prefix`, user accounts) asks for `manage_network_options` or `manage_network_users`, not `manage_options`
+- [ ] No security decision rests on request data alone (`$_REQUEST['action']`, user agent, `X-Forwarded-*`)
+- [ ] A failed check inside a `login_form_*` handler ends the request with `exit`, never a bare `return`
+
+### Output in JavaScript
+
+- [ ] Every escaper in the plugin's JS encodes quotes, or is named so that its context is explicit (`escHtml` / `escAttr`)
+- [ ] No value reaches attribute position through a helper built on `textContent` / `innerHTML`
+- [ ] Values landing in `href=` or `src=` have their scheme validated, not just their quotes escaped
 
 ### General
 
@@ -875,6 +1015,16 @@ The plugin review team rejects more aggressively than PHPCS alone. Their reviewe
 | `WordPress.Security.NonceVerification.Missing` (on `$_POST`) | Verify the parent hook's nonce explicitly inside the callback, even when the parent verifies it before firing. Add `exit;` literal after redirects. |
 | `WordPress.Security.ValidatedSanitizedInput.MissingUnslash` | Add `wp_unslash()` before sanitizing every superglobal read. |
 | `WordPress.Security.ValidatedSanitizedInput.InputNotSanitized` | Apply the most specific `sanitize_*` for the field. |
+
+### A `phpcs:ignore` is a claim with an expiry date
+
+Suppressing a sniff is asserting that the code is fine anyway. Nobody ever re-reads that assertion, so it must be written to be checkable:
+
+- **No justification, no suppression.** Without the `--` explanation, a suppression is indistinguishable from carelessness. Audited plugin, real numbers: 60 security suppressions, 35 of them with no justification at all.
+- **A justification that claims something about another part of the code must cite it as `file:line`.** Comments like `-- nonce verified in handler` cannot be verified, and that exact comment was hiding a complete two-factor authentication bypass: the handler it referred to returned early on an invalid nonce and never verified anything. `-- nonce verified in class-foo.php:412` can be checked in seconds.
+- **Suppressions are inherited when code is copied**, and nobody re-reviews them at the destination. The one above was written once and travelled untouched through 70 releases.
+- **A `phpcs:disable` without its matching `phpcs:enable` silences the sniff to the end of the file.** Count both per file rather than assuming they balance.
+- **And a clean Plugin Check run with suppressions in the tree is not security coverage.** It is the metric measuring its own silencer. Report the number of security suppressions next to the zero.
 
 ### Security sniffs that are safe to leave suppressed (with justification)
 
