@@ -32,6 +32,22 @@ La IA tiende a escribir frases cortas encadenadas con punto y seguido, imitando 
 
 **Truco de revisión:** lee el párrafo mentalmente en voz alta. Si suena entrecortado, a martillazos, o a traducción literal del inglés, tienes fragmentación de más.
 
+**Segundo disparador: la unidad de argumento.** La regla de las tres frases cortas caza el ritmo a martillazos, pero se le escapa el caso más frecuente, que es partir en dos o tres puntos una sola afirmación con frases de longitud normal. Ahí no hay ninguna frase corta que dispare la alarma y el problema está igual.
+
+**Lo que hace la IA:**
+> Pues en lo de siempre, y el matiz importa. Lo que me revienta no es que alguien cobre por su trabajo, faltaría más. Es el cambio de cromos. Subes al directorio una versión mutilada y la usas de embudo.
+
+**Versión natural:**
+> Pues en lo de siempre, y el matiz importa, lo que me revienta no es que alguien cobre por su trabajo, faltaría más, es el cambio de cromos. Subes al directorio una versión mutilada y la usas de embudo.
+
+Fíjate en que el último punto se queda, y es el único que estaba bien puesto: ahí se pasa de enunciar la tesis a describir el mecanismo.
+
+**Prueba del punto.** El punto está bien cuando lo que viene después cambia de sujeto, de tiempo o de dirección del argumento. Está mal cuando solo sigue matizando la misma afirmación. Si puedes leer las dos frases de un tirón sin que cambie el sentido y la segunda no arranca con conector, era una coma.
+
+**Por qué pasa esto.** No es solo que el ritmo inglés sea más corto. Es que lo que hace falta en español para evitar el punto, unir oraciones independientes con comas, en inglés es un error con nombre propio (*comma splice*) que persiguen todas las guías de estilo. La construcción que el español necesita está marcada como falta en la distribución dominante, así que el punto sale como opción segura. A eso se suma que buena parte del español publicado en internet es traducción del inglés hecha frase a frase, sin repuntuar, de modo que la longitud de frase inglesa sobrevive intacta.
+
+**La cadena del rebote.** Este patrón se cambia de ropa cada vez que lo corriges. Primero aparece como raya dramática, la quitas y sale en forma de dos puntos, la quitas y sale en forma de punto y seguido. Lo que se corrige es el signo y lo que persiste es la pausa. Un texto con cero rayas y cero dos puntos puede seguir teniendo el mismo tic. Revisa las tres reglas juntas o no verás nada.
+
 ## Exceso de comas tras complementos iniciales
 
 La IA mete una coma automática después de cualquier cosa que aparezca al principio de la frase antes del verbo principal. En español esa coma solo es obligatoria cuando el complemento es largo (5 palabras o más) o cuando hay ambigüedad sin ella. En complementos cortos, la coma entorpece la lectura y suena a escritura administrativa innecesaria.
@@ -122,6 +138,8 @@ La IA usa la raya larga como herramienta de énfasis donde una persona pondría 
 > Esto cambia las cosas para cualquier desarrollador, y no exagero.
 
 **Regla:** máximo una raya cada 500 palabras. Usa comas, paréntesis o punto en su lugar.
+
+**Ojo con el rebote.** Al quitar una raya, el sustituto que sale solo son los dos puntos, y si también los quitas sale el punto y seguido, porque lo que se buscaba era la pausa dramática y no el signo. Es el mismo tic con otra ropa. Revisa esta regla siempre junto con la de los dos puntos en frase corrida y la de fragmentación excesiva, porque un texto con cero rayas no prueba nada por sí solo.
 
 ## Gerundio colgante
 
@@ -218,30 +236,75 @@ Cuando una lista sí tiene sentido (elementos largos, con explicación propia, d
 
 ## Dos puntos en frase corrida (cuándo sí son patrón IA)
 
-Lo anterior no significa que los dos puntos sean siempre bienvenidos. Dentro de una frase en prosa corrida, los dos puntos para introducir una enumeración corta o una explicación son poco naturales en español y sí son patrón IA.
+Lo anterior no significa que los dos puntos sean siempre bienvenidos. Dentro de una frase en prosa corrida son patrón IA en tres casos, y conviene distinguirlos porque no se corrigen igual.
 
-**Lo que hace la IA (mal):**
-> Este bloque tiene un detalle interesante: el selector de autor se genera dinámicamente.
+### Caso 1. Enumeración corta
+
+**Lo que hace la IA:**
 > Un bloque que muestra la información de un autor de WordPress: avatar, nombre, biografía y enlace a su web.
 
-**Versión natural del primer ejemplo:**
-> Este bloque tiene un detalle interesante, y es que el selector de autor se genera dinámicamente.
-
-**Versión natural del segundo ejemplo (opción 1, paréntesis):**
+**Versión natural (paréntesis):**
 > Un bloque que muestra la información de un autor de WordPress (avatar, nombre, biografía y enlace a su web).
 
-**Versión natural del segundo ejemplo (opción 2, lista):**
+**Versión natural (lista):**
 > Un bloque que muestra la información de un autor de WordPress:
 > - Avatar.
 > - Nombre.
 > - Biografía.
 > - Enlace a su web.
 
-**Regla:** evita los dos puntos en medio de frase corrida para enumerar o explicar. Reescribe con conjunción, paréntesis o pasa a formato lista.
+### Caso 2. Explicación de un término
 
-**Resumen de los dos usos de los dos puntos:**
-- **En prosa corrida:** evítalos para enumerar o explicar, es patrón IA en español.
+**Lo que hace la IA:**
+> Este bloque tiene un detalle interesante: el selector de autor se genera dinámicamente.
+
+**Versión natural:**
+> Este bloque tiene un detalle interesante, y es que el selector de autor se genera dinámicamente.
+
+### Caso 3. Revelación o remate
+
+El más difícil de cazar, porque no hay ni lista ni definición. Es una frase completa, dos puntos, y otra frase completa que remata, repite o desvela lo anterior. Sirve para montar una pausa dramática de dos tiempos, y es de las marcas más reconocibles de texto generado, porque hablando nadie hace esa pausa.
+
+**Lo que hace la IA:**
+> Y ese es el peor tipo de fallo: no verás ningún error.
+> Cuando lo montes, hazlo bien: si la clave no vale, no des el enlace.
+> Pero que quede claro: esto funciona con el gestor de archivos y punto.
+> El plugin no existe allí. Resultado: un error encima de una actualización buena.
+> Un consejo tonto que agradecerás: no subas los ficheros ocultos del sistema.
+
+**Versión natural:**
+> Y ese es el peor tipo de fallo, porque no verás ningún error.
+> Cuando lo montes, hazlo bien, y si la clave no vale no des el enlace.
+> Pero esto funciona con el gestor de archivos y punto.
+> El plugin no existe allí, así que lo que se encuentra el cliente es un error encima de una actualización buena.
+> Un consejo tonto que agradecerás. No subas los ficheros ocultos del sistema.
+
+**Prueba mecánica.** Si lo que va antes de los dos puntos es una frase completa y lo que va después también, es una revelación y sobran. Cámbialos por coma más conjunción (y, porque, que, así que) o por punto y seguido. Si lo de después es un fragmento que enumera, estás en el caso 1. Si es la definición de un término que acabas de nombrar, en el caso 2.
+
+### La trampa del arranque en negrita
+
+El formato `Concepto: explicación` es correcto en listas, pero no da vía libre para colarlo en prosa corrida poniendo el arranque en negrita. La negrita no convierte un párrafo en un ítem de lista.
+
+**Lo que hace la IA:**
+> **Y aquí viene el detalle que te ahorra una tarde:** el zip no puede ser un descargable de WooCommerce.
+
+**Versión natural:**
+> **Y aquí viene el detalle que te ahorra una tarde.** El zip no puede ser un descargable de WooCommerce.
+
+Si estás dentro de un párrafo de prosa, aplica la prueba mecánica aunque haya negrita delante.
+
+### Densidad y efecto rebote
+
+Igual que con la raya, lo que canta no es un caso suelto sino la repetición. Uno o dos en un texto largo pasan desapercibidos, media docena es una huella dactilar.
+
+**Regla:** máximo unos dos puntos cada 1.000 palabras en prosa corrida, sin contar listas, tablas ni los que introducen un bloque de código o una cita literal.
+
+Y revisa esta regla junto con la de la raya dramática, porque se compensan sin que te des cuenta. Al quitar el guion largo, el sustituto que sale solo son los dos puntos. Se va el signo y se queda la pausa.
+
+**Resumen de los usos de los dos puntos:**
+- **En prosa corrida:** evítalos para enumerar, para explicar y para rematar. Los tres son patrón IA en español.
 - **En listas concepto-explicación:** úsalos con normalidad, es el formato estándar español.
+- **Introduciendo un bloque de código, una cita o un ejemplo separado del párrafo:** correctos y no hay que tocarlos.
 
 ## Punto y coma (;) en exceso
 

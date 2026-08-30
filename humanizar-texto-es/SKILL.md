@@ -40,7 +40,7 @@ Eso sí, *natural* no es lo mismo que *coloquial*. Que un texto suene a persona 
 
 1. **Elimina frases de relleno.** Quita aperturas predecibles y muletillas de énfasis. Consulta la sección "Palabras y frases de riesgo".
 2. **Rompe las estructuras formulaicas.** Evita contrastes binarios, tríos forzados, preguntas retóricas con respuesta inmediata. Consulta la sección "Patrones estructurales a evitar".
-3. **Entrelaza frases cortas en español.** Tres o más frases cortas seguidas (de menos de ~10 palabras) sobre el mismo tema son ritmo de inglés, no de español. Une con comas, conjunciones (y, pero, porque, así que) o relativos. Pero sin pasarte: unir de más crea frases-río, otro patrón de IA. La meta es alternar largas y cortas, no saltar de un extremo a otro.
+3. **Entrelaza las frases que sostienen una misma idea.** Tres o más frases cortas seguidas (de menos de ~10 palabras) sobre el mismo tema son ritmo de inglés, no de español. Y ojo, que también lo es partir una sola afirmación en dos o tres puntos aunque las frases no sean cortas. Une con comas, conjunciones (y, pero, porque, así que) o relativos. Pero sin pasarte, que unir de más crea frases-río, otro patrón de IA. La meta es alternar largas y cortas, no saltar de un extremo a otro.
 4. **No pongas coma automática tras complementos iniciales cortos.** Con complementos de 4 palabras o menos, no va coma. Solo va con 5 palabras o más, o si hay ambigüedad sin ella.
 5. **Varía el ritmo y los grupos.** Mezcla la longitud de las frases. No agrupes siempre en tres: a veces dos, a veces cuatro, a veces una lista. Lo que canta es repetir siempre el mismo número. No termines todos los párrafos igual.
 6. **Confía en el lector.** Afirma directamente. No suavices, no justifiques, no lleves de la mano.
@@ -53,6 +53,7 @@ Antes de entregar cualquier texto, revisa:
 
 - ¿Hay tres o más frases cortas seguidas (de menos de ~10 palabras) sobre el mismo tema? Une al menos dos con comas, conjunciones o relativos. (Pero no las encadenes todas: una frase-río también canta.)
 - ¿Hay coma después de un complemento inicial corto (4 palabras o menos)? Quítala. Solo va con 5 palabras o más, o si hay ambigüedad.
+- ¿Hay dos o más frases seguidas que sostienen la misma afirmación, aunque no sean cortas? Aplica la prueba del punto. Si lo que viene después no cambia de sujeto, de tiempo ni de dirección del argumento, era una coma. Y revísalo junto con las rayas y los dos puntos, porque este patrón se cambia de signo cada vez que lo corriges.
 - ¿Tres frases seguidas tienen la misma longitud? Rompe una.
 - ¿Un párrafo termina con frase sentenciosa tipo frase célebre? Cámbiala.
 - ¿Hay una raya (—) antes de una revelación? Quítala, usa coma o punto.
@@ -61,7 +62,7 @@ Antes de entregar cualquier texto, revisa:
 - ¿Hay más de dos conectores formales (asimismo, no obstante, por consiguiente) en un párrafo? Sustituye la mayoría por conexiones naturales.
 - ¿Terminas una sección con "En definitiva" o "En resumen"? Elimínalo.
 - ¿Usas gerundios vacíos al final de la frase ("contribuyendo a...", "posicionándose como...")? Reescribe con verbo conjugado.
-- ¿Hay dos puntos (:) en medio de una frase corrida para introducir una enumeración corta? Reescribe con coma o paréntesis. (Ojo: en listas concepto-explicación tipo `Concepto: explicación`, los dos puntos sí son correctos y no hay que quitarlos.)
+- ¿Hay dos puntos (:) en medio de una frase corrida? Aplica la prueba de las dos frases completas. Si lo de antes y lo de después funcionan por separado como frases enteras, es una revelación y sobran, así que cámbialos por coma más conjunción o por punto y seguido. Si lo de después es una enumeración corta, usa paréntesis o pasa a formato lista. Un arranque en negrita no los legitima. Cuenta cuántos hay en total, porque más de dos cada 1.000 palabras es huella, y revísalo junto con las rayas, que quitar rayas suele producir dos puntos. (Ojo: en listas concepto-explicación tipo `Concepto: explicación`, y al introducir un bloque de código o una cita, sí son correctos y no hay que quitarlos.)
 - ¿Usas el punto y coma (;) para encadenar frases? Suele ir mejor coma, punto o «y». Déjalo solo en sus usos legítimos (enumeraciones complejas, dos oraciones muy ligadas).
 - ¿Abres o cierras con un gancho de intriga («lo que nadie te cuenta», «y aquí viene lo bueno», «spoiler:»)? Quítalo y ve al dato. Lo mismo con la escena hipotética («imagina que…») y la empatía fingida («sé lo que estás pensando», «no estás solo»).
 - ¿Hay un calco del inglés («cuando se trata de», «al final del día», «asegúrate de»)? Cámbialo por su forma natural.
@@ -100,6 +101,8 @@ Consulta la lista completa con ejemplos en [references/estructuras.md](reference
 - **Enumeración mecánica**: "En primer lugar... En segundo lugar... Por último..."
 - **Capitalización de titulares**: mayúscula en cada palabra al estilo inglés (o, al corregir, el titular entero en minúscula)
 - **Punto y coma en exceso**: usar el ; para encadenar frases donde iría coma, punto o «y»
+- **Punto y seguido de más**: partir en dos o tres frases una sola afirmación, donde el español pide coma
+- **Dos puntos de revelación**: frase completa, dos puntos y otra frase completa que remata lo anterior, montando una pausa dramática que hablando nadie hace
 
 ## Ganchos y fórmulas de relleno
 
@@ -166,8 +169,9 @@ Cuando revises texto generado:
 3. Repasa las estructuras contra [references/estructuras.md](references/estructuras.md) y los ganchos contra [references/ganchos.md](references/ganchos.md). Reescribe los patrones que se repiten o suenan forzados, no todos por defecto.
 4. Varía el ritmo: rompe series de frases con longitud similar, pero sin pasarte a frases-río.
 5. Elimina todo lo que no aporte información nueva.
-6. Revisa las costuras: que no quede coma tras un complemento corto, ni punto y coma de más, ni un titular en mayúsculas de estilo inglés. Si una frase suena a discurso institucional, reescríbela.
-7. Puntúa con la tabla de arriba (uso interno). Si está por debajo de 35 o fallan dos dimensiones, revisa de nuevo.
+6. Revisa las costuras. Que no quede coma tras un complemento corto, ni punto y coma de más, ni un titular en mayúsculas de estilo inglés. Si una frase suena a discurso institucional, reescríbela.
+7. Cuenta los tics de puntuación en vez de releerlos. Rayas, dos puntos en prosa corrida y puntos y coma. Cada caso suelto parece razonable y solo cantan al ver el total comparado con la longitud del texto.
+8. Puntúa con la tabla de arriba (uso interno). Si está por debajo de 35 o fallan dos dimensiones, revisa de nuevo.
 
 ## Notas importantes
 
