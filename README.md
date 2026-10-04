@@ -30,19 +30,37 @@ All skills are based on official documentation, coding standards, and real-world
 ### WordPress Development
 
 #### [WordPress Plugin Security](https://github.com/fernandotellado/ai-skills/blob/main/wp-plugin-security/SKILL.md)
-Comprehensive security guidelines for WordPress plugin development covering sanitization, validation, escaping, nonces, capabilities, SQL injection prevention, XSS protection, and CSRF mitigation. Based on official WordPress Developer Resources and WordPress Coding Standards.
+Security guidelines for WordPress plugin development: sanitization, validation, escaping in PHP and in admin JavaScript, nonces, capabilities over objects, multisite privilege boundaries, SQL injection, request headers and the client IP behind proxies, authentication shortcuts, registered meta exposed in REST, and secrets kept in the database. It also bundles a release security gate: a procedure and three scripts to run before every plugin release. Based on official WordPress Developer Resources and on post-incident reviews of CVE-2026-81754 and of the flaws found after it.
 
 **Key topics:**
-- Input sanitization and validation
-- Output escaping
+- Input sanitization and validation, including what `sanitize_text_field()` silently removes from URLs, paths and slugs
+- Output escaping in PHP and in the JavaScript that builds HTML
 - Nonce implementation
-- User capabilities and permissions
-- SQL injection prevention
-- AJAX and REST API security
+- Capabilities over objects, and multisite privilege boundaries
+- SQL injection prevention, and dynamic SQL that passes Plugin Check
+- AJAX and REST API security, including registered meta exposed in REST
+- Request data that must never decide: user agents, proxy headers and the client IP
+- Authentication shortcuts and second-factor flows
+- Secrets in copies, diffs and exports
+- PHPCS suppressions and the wordpress.org automated security review
 - File handling security
 - Common vulnerabilities (XSS, CSRF, SQLi)
+- Release security gate: depth by risk, mechanical checks, written analysis, cross-review, and a release note with figures
 
-**Compatibility:** WordPress 6.0+ / PHP 7.4+
+**Includes reference files:**
+- `references/request-data-and-client-ip.md` — Data chosen by the caller, a tested client IP resolver for sites behind proxies, cache keys, and second-factor flows
+- `references/registered-meta-and-core-filters.md` — Registered meta as a REST write endpoint, and the values core does not escape for you
+- `references/secrets.md` — How to keep a copy of a configuration file without storing its secrets
+- `references/release-gate.md` — The release security gate, step by step, with the commands to run
+
+**Includes scripts** (run `bash scripts/selftest.sh` once before trusting them):
+- `scripts/test-escapers.js` — Fails when a JavaScript escaper that does not encode quotes is used inside an attribute
+- `scripts/audit-suppressions.php` — Lists suppressions of security and SQL sniffs by risk, and fails when any has no written justification
+- `scripts/class-symbols.py` — Fails when a class file uses a `self::` or `$this->` symbol it does not define, which `php -l` does not check
+
+**If you used version 1.2:** its two-factor example labelled as correct was a bypass. It let a login complete without the code from any login form other than `wp-login.php`. The section "Security decisions must not rest on request data" now explains why and shows the shape without the shortcut.
+
+**Compatibility:** WordPress 6.0+ / PHP 7.4+. The scripts need Node.js, PHP CLI and Python 3.
 
 ---
 
@@ -67,25 +85,31 @@ Comprehensive performance guidelines for WordPress plugin development covering d
 ---
 
 #### [WordPress Plugin Development](https://github.com/fernandotellado/ai-skills/blob/main/wp-plugin-development/SKILL.md)
-Comprehensive architecture and development guidelines for WordPress plugins published on wordpress.org, covering file structure, plugin header, lifecycle hooks, Settings API, admin UI, custom post types, custom database tables, internationalization, plugin dependencies, and submission requirements. Based on the official WordPress Plugin Developer Handbook and Plugin Review Team guidelines.
+Architecture and development guidelines for WordPress plugins published on wordpress.org, covering file structure, plugin header, lifecycle hooks, Settings API, admin UI, default values and option migrations, translatable defaults, short-circuit filters, custom post types, custom database tables, internationalization, plugin dependencies, readme and changelog rules, and submission and release requirements. Based on the official WordPress Plugin Developer Handbook and Plugin Review Team guidelines.
 
 **Key topics:**
 - Plugin file structure and main file bootstrap
 - Plugin header requirements for wordpress.org
-- Lifecycle hooks (activation, deactivation, uninstall)
+- Lifecycle hooks (activation, deactivation, uninstall), and what they may write on a multisite network
 - Main plugin class with singleton pattern
-- Actions and filters system
+- Actions and filters system, including short-circuit filters such as `pre_get_document_title`
 - Settings API: sections, fields, sanitization
+- Defaults as product and security decisions, and option migrations
 - Admin menu and settings page
+- Escaping helpers for admin JavaScript
 - Custom post types and taxonomies
 - Custom database tables with dbDelta
-- Internationalization and translation readiness
+- Internationalization, and translatable defaults that must never be stored in the database
 - Plugin dependencies management
 - Asset loading rules (no inline scripts/styles)
 - Prefixing rules and naming conventions
 - wordpress.org submission requirements and common rejection reasons
-- readme.txt structure and rules
+- readme.txt structure and rules, with the limits measured against the real readme parser
+- What happens to a release after upload: the automated security review, `Tested up to` and `Requires at least`
 - Debugging tools and best practices
+
+**Includes reference files:**
+- `references/translatable-defaults.md` — The full recipe: save path, one-time cleanup, widget instances, flat options and `wpml-config.xml`
 
 **Compatibility:** WordPress 6.0+ / PHP 7.4+
 
@@ -143,23 +167,28 @@ Elimina patrones de escritura predecibles de la IA en textos en español de Espa
 
 ## How to Use These Skills
 
+Several skills are more than one file: a main `SKILL.md`, reference files under `references/` that the assistant opens only when it needs them, and, in the security skill, scripts under `scripts/`. Take the whole folder, not just `SKILL.md`.
+
 ### With Claude (via Projects)
 
 1. Create a new Project in Claude
-2. Add the skill markdown file to your project knowledge
+2. Add the skill's `SKILL.md` to your project knowledge, together with the files of its `references/` folder if it has one
 3. Claude will automatically reference the skill when relevant to your questions
 
 ### With Claude Code
 
 1. Clone or download the skill folder to `~/.claude/skills/`
 2. Claude Code will detect and use the skill automatically
-3. For multi-file skills (like the writing skills), add the entire folder
+3. For multi-file skills, add the entire folder, so that Claude Code can open the reference files and run the scripts
+4. For the security skill, run `bash scripts/selftest.sh` once from its folder. It checks each script against a case it must flag and a case it must leave alone, and it needs Node.js, PHP CLI and Python 3
 
 ### With ChatGPT (via Custom GPTs)
 
 1. Create a Custom GPT or edit an existing one
-2. Upload the skill markdown file(s) to the GPT's knowledge base
+2. Upload the skill markdown file(s) to the GPT's knowledge base, including the reference files
 3. The GPT will use the skill content to provide specialized assistance
+
+The scripts of the security skill do not run inside a GPT. Run them yourself from a terminal, as described in `references/release-gate.md`.
 
 ### With Other AI Assistants
 
@@ -204,7 +233,7 @@ Each skill includes:
 - **Checklists**: Review and validation lists
 - **References**: Official documentation links
 
-Some skills use a multi-file structure with a main `SKILL.md` and additional reference files in a `references/` directory, following the agentskills.io progressive disclosure pattern.
+Some skills use a multi-file structure with a main `SKILL.md`, additional reference files in a `references/` directory and, where a check can be automated, scripts in a `scripts/` directory, following the agentskills.io progressive disclosure pattern.
 
 ## Contributing
 
@@ -250,6 +279,7 @@ Skills are based on:
 - Official WordPress Developer Resources
 - WordPress Coding Standards
 - WordPress VIP Documentation
+- Post-incident reviews of real plugin vulnerabilities, including CVE-2026-81754
 - Wikipedia's "Signs of AI writing" guide (WikiProject AI Cleanup)
 - Community projects: [stop-slop](https://github.com/hardikpandya/stop-slop), [humanizer](https://github.com/blader/humanizer)
 - Real-world professional development experience

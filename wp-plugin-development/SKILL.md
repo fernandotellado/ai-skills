@@ -1,11 +1,11 @@
 ---
 name: wp-plugin-development
-description: "Architecture and development guidelines for WordPress plugins published on wordpress.org: file structure, plugin header, lifecycle hooks, Settings API, admin UI, escaping helpers for admin JavaScript, default values and option migrations, multisite-shared resources, custom post types, custom database tables, internationalization, plugin dependencies, and wordpress.org submission requirements. Based on the official WordPress Plugin Developer Handbook and Plugin Review Team guidelines."
+description: "Architecture and development guidelines for WordPress plugins published on wordpress.org: file structure, plugin header, lifecycle hooks, Settings API, admin UI, escaping helpers for admin JavaScript, default values and option migrations, translatable defaults, multisite-shared resources, short-circuit filters, custom post types, custom database tables, internationalization, plugin dependencies, readme.txt and changelog rules, and wordpress.org submission and release requirements. Use it whenever you create or restructure a plugin, add settings, hooks, post types or tables, make a plugin translation-ready, or prepare a release or a wordpress.org submission. Based on the official WordPress Plugin Developer Handbook and Plugin Review Team guidelines."
 compatibility: "WordPress 6.0+ / PHP 7.4+. Targets plugins for distribution on wordpress.org."
 license: GPL-2.0-or-later
 metadata:
   author: fernando-tellado
-  version: "1.3"
+  version: "1.4"
 ---
 
 # WordPress plugin development
@@ -264,7 +264,8 @@ The only acceptable way to add small amounts of dynamic CSS or JS is through `wp
 | `Author` | Yes | Your name or company |
 | `License` | Yes | Must be GPL-2.0-or-later or compatible |
 | `Text Domain` | Yes | Must match the plugin folder slug |
-| `Domain Path` | Deprecated | Do no add this line |
+| `Domain Path` | Deprecated | Do not add this line |
+| `Tested up to` | Optional | Normally declared only in `readme.txt`. If the plugin header declares it as well, the header value overrides the readme and Plugin Check requires both to match (`mismatched_tested_up_to_header`), so updating it stops being a readme-only change |
 | `Requires Plugins` | Optional (WP 6.5+) | Comma-separated plugin slugs that must be active before this plugin activates. WordPress prompts the user to install/activate them. Older WP versions ignore the header silently, so it is safe to declare even on plugins that target 6.0+. |
 | `WC requires at least` | WooCommerce add-ons only | Minimum WooCommerce version. Recognised by WC itself, not by WordPress core. |
 | `WC tested up to` | WooCommerce add-ons only | Latest WooCommerce version you tested against. |
@@ -601,6 +602,38 @@ add_filter( 'shortcode_atts_my_form', function( $atts ) {
 ```
 
 Same pattern applies to any filter named after a specific hook context: `the_content` filters do not run on raw post body access, `the_title` does not run on `get_the_title()` in some admin contexts, etc. When in doubt, extract the logic and call it from every entry point.
+
+### Short-circuit filters: answering early is the opposite of being polite
+
+Some core filters are short-circuits: when the filter returns a value, core uses it and skips its own work (`pre_get_document_title`, `pre_option_*`, `pre_http_request`). Every callback hooked there still runs, in priority order, and the last one has the final say unless it hands back what it received. So on those filters priority is not courtesy. It decides who wins.
+
+A plugin hooked `pre_get_document_title` at priority 5 "so as not to get in the way". A popular theme hooked the same filter at the default priority, and the first statement of its callback emptied the incoming value. On every site with that theme the custom title never reached `<title>`, while `og:title` showed it, because that tag read the meta directly. That contrast between the social tags and the `<title>` is the signature of this bug, and it took months and a support report to notice.
+
+The recipe has three parts and they only work together:
+
+```php
+// 1. Hook last.
+add_filter( 'pre_get_document_title', 'myplugin_document_title', PHP_INT_MAX );
+
+function myplugin_document_title( $title ) {
+    $custom = myplugin_get_custom_title();
+
+    // 3. Offer your own filter: nobody can hook after PHP_INT_MAX.
+    $custom = (string) apply_filters( 'myplugin_document_title', $custom );
+
+    // 2. With nothing to say, hand back what came in, untouched.
+    if ( '' === $custom ) {
+        return $title;
+    }
+
+    return esc_html( $custom );   // core does not escape on this path: see the security skill
+}
+```
+
+- Without the pass-through, hooking last is trampling instead of being trampled, the same bug from the other side
+- Without your own filter you close the door to every extension
+- It is a change of behaviour and goes in the changelog: on a site with an SEO plugin, your value now wins when it is set, and theirs still wins when it is empty
+- Themes that never adopted `add_theme_support( 'title-tag' )` print their title from `wp_title()`, so hook that filter the same way. A theme that prints `<title>` by hand cannot be filtered at all: when you close a bug like this one, say what is left out
 
 ## Settings API
 
@@ -1048,9 +1081,31 @@ __( 'text', $domain );
 
 ### Translation template generation
 
-There is no need to generate a `.pot` file because de use of Domain Path is deprecated
+There is no need to generate or ship a `.pot` file for a plugin hosted on wordpress.org: translate.wordpress.org extracts the strings from the code, and the use of Domain Path is deprecated.
 
 `load_plugin_textdomain()` is not needed since WordPress 4.6.
+
+### Never store a translatable default in the database
+
+A default text that is printed to somebody is resolved with `__()` on every request. Once it is stored it stops going through gettext and stays frozen in the language of whoever saved it, for every language of the site: on a multilingual site the user translates the string and nothing changes.
+
+It gets in by accident, three ways:
+
+- The settings field comes pre-filled with the default, so the first "Save changes" writes it, whatever the administrator was changing
+- Activation seeds the whole defaults array with `add_option()`, and during activation translations are not even loaded, so it stores the English source
+- A migration "helpfully" replaces the stored text with its translation
+
+```php
+// WRONG: the default text lands in the database on the first save
+$value = get_option( 'myplugin_heading', __( 'Upcoming posts', 'my-plugin' ) );
+echo '<input name="myplugin_heading" value="' . esc_attr( $value ) . '">';
+
+// CORRECT: stored only when the site wrote its own wording; resolved when reading
+$stored  = get_option( 'myplugin_settings', array() );
+$heading = isset( $stored['heading'] ) ? $stored['heading'] : __( 'Upcoming posts', 'my-plugin' );
+```
+
+When saving, drop the key if the value equals the default in any installed language (drop it, do not store an empty string, which usually means something else), and clean what earlier versions stored with a one-time routine gated by a version option. The full recipe, with the cleanup, widget instances, flat options and `wpml-config.xml`: `references/translatable-defaults.md`.
 
 ## Plugin dependencies
 
@@ -1233,14 +1288,22 @@ Initial release.
 - Maximum 5 tags **and no duplicates** (a `Tags:` line with `woocommerce, eu, woocommerce, …` counts the duplicate and fails the check)
 - All tags in English (the directory is international; localized tags get little traffic and crowd the slot count)
 - Short description: 150 characters maximum, no HTML
-- Upgrade notice: under 300 characters
+- Upgrade notice: 300 **bytes** at most, measured after the readme parser has turned every apostrophe and quotation mark into an HTML entity. Each one costs 6 bytes instead of 1: a notice of 266 characters with 11 apostrophes and 2 quotes measures 331 and raises the `upgrade_notice_limit` warning. Write it without quotes or apostrophes, or measure it with the parser
 - No Network header (means network-only activation, which is rarely correct)
 - `Tested up to` must reflect the latest WordPress version you have tested
-- `Stable tag` must match the actual tag in the SVN repository, **and the `Version:` in the main plugin file header**, **and the version constant** defined inside the plugin — all three must agree on every release
-- Changelog must be present and maintained — keep only the latest major and its minor releases in `readme.txt`; move older entries to a separate `changelog.txt` if you want to keep the full history available
+- `Stable tag` must match the actual tag in the SVN repository, **and the `Version:` in the main plugin file header**, **and the version constant** defined inside the plugin — all three must agree on every release, together with the first entry of the Changelog in `readme.txt` and the first entry of `changelog.txt` if you keep one
+- Changelog must be present and maintained — keep only the latest major and its minor releases in `readme.txt`. If you keep a separate `changelog.txt` with the full history, it carries every release, the current one included
+- The Changelog and the FAQ sections are cut at 5,000 words each, and any other section at 2,500. Plugin Check reports it as the warning `readme_parser_warnings_trimmed_section_changelog`. When a release series outgrows the limit, drop its oldest entries from the readme, starting with the first one, and keep them in `changelog.txt`
 - "Upgrade Notice" should contain only the latest version's notice; replace it on every release (not accumulate)
 - No donation links unless approved by the Plugin Review Team
-- Avoid release-process noise in the changelog: lines like "Internal: WPCS pass", "Dev tooling: composer.json added", "Refactored functions-admin.php into smaller files for maintenance, no behavioural change" are not user-facing and belong in `changelog.txt` or a git tag message, not in the public readme
+- Avoid release-process noise in the changelog: lines like "Internal: WPCS pass", "Dev tooling: composer.json added", "Refactored functions-admin.php into smaller files for maintenance, no behavioural change" are not user-facing and belong in a commit message or in your own release notes, not in the readme nor in `changelog.txt`, which carries the same entries as the readme
+- The changelog fails in both directions, so check both. Before describing a security fix, confirm that the vulnerable code could actually run: announcing a flaw that was never reachable is as wrong as hiding one. And describe every change of behaviour even when it is not a vulnerability: a default that flips, a filter that now wins over another plugin, a feature that had never worked and now does, with everything that working brings along
+
+### What happens to a release after you upload it
+
+- **Every release is reviewed automatically for security before it is distributed.** Since June 2026 a release goes through a cooldown period before it reaches the update API, and during it the changes are analysed by several AI models together with Jetpack Scan. A release with a high risk score is blocked: sites keep the previous version and all committers get an email. A clean Plugin Check run predicts nothing about it. See the [handbook page](https://developer.wordpress.org/plugins/wordpress-org/automated-security-review/) and the release gate of the wp-plugin-security skill
+- **`Tested up to` in the plugin header overrides the readme.** If the main file declares it, Plugin Check requires both values to match, so it can no longer be updated with a readme-only commit: it is a code change and a new version. Check this before a new WordPress release, because an outdated value costs the plugin visibility in the directory
+- **A function newer than `Requires at least` is an error** (`wp_function_not_compatible_with_requires_wp`). Plugin Check accepts the call when the same file contains `function_exists( 'name' )`. It matches by name anywhere in the file and does not check that the guard wraps the call, so make sure it does. Otherwise raise the minimum version, which is a product decision because it leaves older sites out
 
 ### Assets for the wordpress.org plugin page
 
@@ -1342,6 +1405,12 @@ print_r( $variable );
 echo '<pre>' . $output . '</pre>';
 ```
 
+### Lint checks syntax, not symbols
+
+`php -l` passes a file that calls a method that does not exist: that is a runtime error, and it only shows when the code path runs. It bites when a block is copied from one plugin to another and calls `self::is_enabled()`, which the source class had and the destination does not. If the block hangs from `admin_notices`, the result is a fatal error on every admin page.
+
+After copying code between plugins, check that every `self::X()`, `$this->X()` and `self::CONSTANT` it uses exists in the destination class. The wp-plugin-security skill bundles `scripts/class-symbols.py` for exactly this.
+
 ### Testing with WP_CLI
 
 ```bash
@@ -1357,7 +1426,7 @@ wp cron event run myplugin_daily_task
 # Check plugin is installed correctly
 wp plugin verify-checksums my-plugin
 
-# Generate translation template
+# Generate a translation template (only for a plugin distributed outside wordpress.org)
 wp i18n make-pot . languages/my-plugin.pot
 ```
 
@@ -1412,7 +1481,8 @@ wp i18n make-pot . languages/my-plugin.pot
 - [ ] Escaped combined functions used (`esc_html__()` not `__()`)
 - [ ] `printf()` / `sprintf()` used for strings with variables (never concatenation)
 - [ ] Translator comments added for strings with variables (`/* translators: %s: description */`)
-- [ ] There is no need to generate a `.pot` file because de use of Domain Path is deprecated
+- [ ] No `.pot` file is shipped for a plugin hosted on wordpress.org, and no `Domain Path` header
+- [ ] No translatable default text is stored in the database: not seeded on activation, not written by the first save of a pre-filled field
 
 ### Hooks and architecture
 
@@ -1429,8 +1499,12 @@ wp i18n make-pot . languages/my-plugin.pot
 - [ ] `readme.txt` present with all required sections
 - [ ] Maximum 5 tags in `readme.txt` and no duplicates
 - [ ] Short description under 150 characters
-- [ ] Upgrade text under 300 characters and only the latest version
-- [ ] `Stable tag`, plugin file `Version:` header, and the in-code version constant all agree
+- [ ] Upgrade notice of 300 bytes at most after the parser's entities, and only for the latest version
+- [ ] Changelog and FAQ sections under 5,000 words each
+- [ ] `Stable tag`, plugin file `Version:` header, the in-code version constant and the first changelog entry all agree
+- [ ] `Tested up to` matches in the readme and in the plugin header, if the header declares it
+- [ ] No call to a function newer than `Requires at least` without a `function_exists()` guard in the same file
+- [ ] Every change of behaviour is in the changelog, and no fix is announced for code that could not run
 - [ ] No Network header in `readme.txt`
 - [ ] No release-process noise in the public changelog (`Internal:`, `Dev tooling:`, refactors with no user-facing change)
 - [ ] All bundled libraries are GPL-compatible

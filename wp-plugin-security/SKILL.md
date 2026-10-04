@@ -1,11 +1,11 @@
 ---
 name: wp-plugin-security
-description: "Security guidelines for WordPress plugin development: sanitization, validation, escaping (in PHP and in admin JavaScript), nonces, capabilities over objects, multisite privilege boundaries, SQL injection prevention, XSS protection, and CSRF mitigation. Use it when writing or reviewing any plugin code that handles user input, prints dynamic output, registers AJAX or REST endpoints, checks permissions, writes files shared by a network, or suppresses PHPCS security sniffs. Based on official WordPress Developer Resources and on a post-incident review of CVE-2026-81754."
-compatibility: "WordPress 6.0+ / PHP 7.4+. Applies to plugins, themes, and custom code."
+description: "Security guidelines for WordPress plugin development: sanitization, validation, escaping (PHP and admin JavaScript), nonces, capabilities over objects, multisite boundaries, SQL injection, XSS, CSRF, request headers and the client IP behind proxies, authentication shortcuts, registered meta in REST, and secrets stored in the database. Bundles a release security gate: a procedure and three scripts to run before every release. Use it whenever you write or review plugin code that handles user input, prints dynamic output, registers AJAX or REST endpoints or meta, checks permissions, reads request headers or IP addresses, touches login or two-factor flows, writes files shared by a network, stores copies of configuration, or suppresses PHPCS security sniffs, and whenever a release, a security audit or a reply to the wordpress.org security review is being prepared, even if nobody says the word security. Based on official WordPress Developer Resources and on post-incident reviews of CVE-2026-81754."
+compatibility: "WordPress 6.0+ / PHP 7.4+. Applies to plugins, themes, and custom code. The bundled scripts need Node.js, PHP CLI with mbstring, and Python 3."
 license: GPL-2.0-or-later
 metadata:
   author: fernando-tellado
-  version: "1.2"
+  version: "1.3"
 ---
 
 # WordPress plugin security
@@ -29,6 +29,33 @@ Reviewing only what changed is how a flaw survives for years while every release
 
 - **If the change touches an escaper, a validator, a capability check or an `is_*_request()` helper, the unit of review is the whole function and every one of its callers**, not the lines of the diff. Ask "does this function do the right thing for all the contexts it is used in?", not "is this new value handled correctly?". In the incident behind these notes, a review looked at exactly the broken escaper, named it in the release notes and approved it, because it followed the path of the new value (which went to text position) instead of auditing the function and its other eleven uses in attribute position.
 - **A review that only follows new data cannot find old flaws.** Rotate: each review takes one whole subsystem and reads it end to end, even if nothing in it changed. And state in writing what the review did **not** cover, so the next one starts there instead of repeating the same blind spot.
+- **Checks catch regressions, not original design.** A flaw that was born with the feature never appears in a diff, and no mechanical check has a reason to see it. Whenever a module is touched, ask two questions by hand: which data in the request is chosen by the caller, and which security decisions are taken with it. And when a pattern is learned, sweep the whole codebase for it, not only the place where it showed up.
+- **Repairing something that never worked wakes up what was asleep behind it.** A loop that did not iterate, a deletion that did not delete: once it works, every latent flaw in what that code touches becomes real. Audit the revived function as if it were new, and re-read the list of deferred issues, because "this change does not make it worse" stops being true when the change makes a deferred path run for the first time.
+
+## Reference files
+
+The sections below carry the rules. The detail, the longer recipes and the cases behind them are in four files. Load the one that matches the code in front of you.
+
+| File | Read it when |
+|------|--------------|
+| `references/request-data-and-client-ip.md` | The plugin reads request headers, resolves the visitor's IP address, exempts some requests from a check, serves cached pages, or adds a step to the login |
+| `references/registered-meta-and-core-filters.md` | It registers meta, or returns a value through `pre_get_document_title`, `wp_title` or another filter whose result core prints |
+| `references/secrets.md` | It stores, exports, emails or diffs configuration files or settings |
+| `references/release-gate.md` | A release, a security audit or a reply to the wordpress.org security review is being prepared |
+
+## Release security gate
+
+Before every release, and whenever a security audit is asked for, run the gate in `references/release-gate.md`. It is a procedure with three depths (ordinary change, sensitive change, security plugin or published vulnerability), the mechanical checks with their commands, the questions to answer in writing and the template of the release note.
+
+Two things it rests on: a confirmed finding of medium severity or higher blocks the release, and a gate without a number has not been passed. The release note carries figures and says what was not looked at.
+
+It bundles three scripts. Run `bash scripts/selftest.sh` once in a new environment before trusting them (`PHP=/path/to/php` if PHP is not on the `PATH`).
+
+| Script | Use |
+|--------|-----|
+| `scripts/test-escapers.js <dir>` | Fails when a JavaScript escaper that does not encode quotes is used inside an attribute |
+| `scripts/audit-suppressions.php <dir>` | Lists suppressions of security and SQL sniffs by risk, and fails when any of them has no written justification |
+| `scripts/class-symbols.py <file.php>` | Fails when a class file uses a `self::` or `$this->` symbol it does not define, which `php -l` does not check |
 
 ## Core security principles
 
@@ -57,7 +84,7 @@ Sanitize input data immediately upon receipt. Use the most specific function ava
 
 | Function | Use case |
 |----------|----------|
-| `sanitize_text_field()` | Single-line text input |
+| `sanitize_text_field()` | Single-line text input (not URLs, paths or slugs: see the notes below) |
 | `sanitize_textarea_field()` | Multi-line text input |
 | `sanitize_email()` | Email addresses |
 | `sanitize_file_name()` | File names |
@@ -79,25 +106,52 @@ Sanitize input data immediately upon receipt. Use the most specific function ava
 ### Sanitization example
 
 ```php
+// Superglobals arrive slashed: wp_unslash() first, then the most specific sanitizer.
+
 // Sanitize a text field from POST
-$title = sanitize_text_field( $_POST['title'] ?? '' );
+$title = sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) );
 
 // Sanitize email
-$email = sanitize_email( $_POST['email'] ?? '' );
+$email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
 
 // Sanitize URL for database storage
-$url = sanitize_url( $_POST['website'] ?? '' );
+$url = sanitize_url( wp_unslash( $_POST['website'] ?? '' ) );
 
 // Sanitize textarea
-$description = sanitize_textarea_field( $_POST['description'] ?? '' );
+$description = sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) );
 ```
 
 ### Important notes on sanitization
 
 - **Never use escape functions for sanitization** - they serve different purposes
 - **And never use sanitization as escaping, which is the direction that actually causes breaches.** No `sanitize_*` function prepares a value for a specific output context. `sanitize_text_field()` strips tags, so the value *looks* clean, but it does not touch quotes: a "sanitized" string can still close an HTML attribute and open a new one. Sanitizing is for storing, escaping is for printing, and the correct escape depends on where the value lands. Any review reasoning that stops at "this is already sanitized" has not finished
+- **`sanitize_text_field()` and `sanitize_textarea_field()` delete percent-encoded octets.** They do not decode `%C3%AD`, they remove it. A URL, a path, a `REQUEST_URI` or a slug with accents or in a non-Latin script, exactly as the browser writes it, loses its characters: `/categor%C3%ADa/` is stored as `/categora/`, and a slug in Cyrillic comes back empty. Read URLs with `esc_url_raw()` and paths and slugs with `wp_strip_all_tags()`, which WPCS accepts as sanitizers, behind an `is_string()` guard, because `esc_url_raw()` throws a `TypeError` on PHP 8 when it is handed an array
+- **`sanitize_text_field()` collapses line breaks into spaces.** For anything multi-line use `sanitize_textarea_field()`
 - When using `filter_var()`, always specify a sanitizing filter (not `FILTER_DEFAULT`)
 - Process only the specific keys you need, not the entire `$_POST`/`$_GET` array
+
+```php
+// A URL keeps its bytes
+$target = ( isset( $_POST['target'] ) && is_string( $_POST['target'] ) )
+    ? esc_url_raw( wp_unslash( $_POST['target'] ) )
+    : '';
+
+// A path or a slug: tags out, %XX octets kept
+$source = ( isset( $_POST['source'] ) && is_string( $_POST['source'] ) )
+    ? wp_strip_all_tags( wp_unslash( $_POST['source'] ), true )
+    : '';
+
+// WRONG for both: the octets are gone before esc_url_raw() sees them
+$target = esc_url_raw( sanitize_text_field( wp_unslash( $_POST['target'] ) ) );
+```
+
+To cut the path out of a full URL, do it by hand rather than with `wp_parse_url()`. On recent PHP versions `parse_url()` replaces some bytes of raw UTF-8 with an underscore: `/categoría/` comes out intact on PHP 7.4 and broken on PHP 8.5.
+
+```php
+// The path of a full URL, without parse_url()
+$path = (string) preg_replace( '~^[a-z][a-z0-9+.\-]*://[^/?#]*~i', '', $url );
+$path = substr( $path, 0, strcspn( $path, '?#' ) );
+```
 
 ```php
 // CORRECT: Specify sanitizing filter
@@ -192,8 +246,9 @@ function ayudawp_is_valid_us_zip( string $zip ): bool {
 }
 
 // Usage
-if ( isset( $_POST['zip'] ) && ayudawp_is_valid_us_zip( $_POST['zip'] ) ) {
-    $zip = sanitize_text_field( $_POST['zip'] );
+$zip = isset( $_POST['zip'] ) ? sanitize_text_field( wp_unslash( $_POST['zip'] ) ) : '';
+
+if ( ayudawp_is_valid_us_zip( $zip ) ) {
     // Process valid ZIP
 }
 ```
@@ -335,6 +390,29 @@ echo '<div id="' . esc_attr( $prefix . '-box-' . $id ) . '">';
 // WRONG: Escaping parts separately
 echo '<div id="' . esc_attr( $prefix ) . '-box-' . esc_attr( $id ) . '">';
 ```
+
+### A dynamic tag name needs an allowlist, not an escape
+
+`esc_attr()` protects a value inside quotes. In tag-name position there are no quotes, and it does not encode spaces or `=`, so a value such as `img src=x onerror=alert(1)` builds a whole new element. No sniff flags it, because the output is "escaped".
+
+```php
+// WRONG: a shortcode attribute chooses the element
+echo '<' . esc_attr( $tag ) . ' class="title">' . esc_html( $text ) . '</' . esc_attr( $tag ) . '>';
+
+// CORRECT: only known tags reach that position
+$allowed = array( 'h2', 'h3', 'h4', 'p', 'div', 'span' );
+$tag     = in_array( $tag, $allowed, true ) ? $tag : 'div';
+
+printf( '<%1$s class="title">%2$s</%1$s>', tag_escape( $tag ), esc_html( $text ) );
+```
+
+In one audited plugin this was XSS reachable by a contributor through a shortcode attribute, and an external scanner found it before the maintainer did.
+
+### Values core does not escape for you
+
+"Whoever prints it will escape it" does not finish a review, in the same way that "it is already sanitized" does not. The escaping of the document title is a callback that core hooks on the `document_title` filter at priority 10, not a line inside `wp_get_document_title()`. A value returned through the `pre_get_document_title` short-circuit, or added on `document_title` or `wp_title` at priority 10 or above, is printed raw inside `<title>`. Priority 10 is the default: only a callback hooked below it runs before core's `esc_html`. Escape it in the plugin.
+
+The table of which entry points are escaped, the emitters and how to check it against the installed core: `references/registered-meta-and-core-filters.md`.
 
 ### Custom HTML escaping with wp_kses
 
@@ -563,6 +641,7 @@ On a network, `manage_options` is held by the administrator of **every** subsite
 - `wp-config.php`, and the `.htaccess` or `robots.txt` at the document root
 - network options, and any dump that follows `$wpdb->prefix` (on the main site that prefix matches every subsite table and the global user tables)
 - user accounts, which on a network belong to the network and not to one site
+- user meta, which lives in one table for the whole network: session tokens, application passwords, second-factor secrets. A per-site setting that acts on user meta acts on that user everywhere. In one audited plugin a per-site "limit concurrent sessions" option let a subsite administrator close the sessions a user had on other sites
 
 The recipe, for anything in that list:
 
@@ -667,17 +746,45 @@ $results = $wpdb->get_results(
 ### Arrays in queries
 
 ```php
-// Build placeholders for array
+// Build the placeholders inside the call, so nothing but the table name is interpolated
 $ids = array( 1, 2, 3, 4, 5 );
-$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
 
 $results = $wpdb->get_results(
     $wpdb->prepare(
-        "SELECT * FROM {$wpdb->posts} WHERE ID IN ( $placeholders )",
+        sprintf(
+            "SELECT * FROM {$wpdb->posts} WHERE ID IN (%s)",
+            implode( ',', array_fill( 0, count( $ids ), '%d' ) )
+        ),
         $ids
     )
 );
 ```
+
+Do not build the list in a variable and interpolate it (`IN ( $placeholders )`). The value is safe, but `WordPress.DB.PreparedSQL.InterpolatedNotPrepared` flags any interpolated variable, and the only way to quiet it is to suppress a SQL sniff, which is exactly the kind of suppression you do not want in the tree.
+
+### Queries that vary: one literal per variant
+
+Write every query as a complete literal, with only `{$wpdb->table}` or `{$wpdb->prefix}literal_name` interpolated and every value through a placeholder. When the columns or the conditions vary, write one literal query per variant. It is verbose and it can be audited by reading it.
+
+```php
+// WRONG: a SQL fragment travels in a variable. The value comes from an internal map,
+// so it is safe today, and Plugin Check still reports it as an error.
+$allowed = array( 'status' => 'status', 'date' => 'created_at' );
+$order   = $allowed[ $key ] ?? 'created_at';
+$rows    = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}ayudawp_log ORDER BY {$order} DESC" );
+
+// CORRECT: one literal per variant
+if ( 'status' === $key ) {
+    $rows = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}ayudawp_log ORDER BY status DESC" );
+} else {
+    $rows = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}ayudawp_log ORDER BY created_at DESC" );
+}
+```
+
+- Plugin Check's data-flow sniff (`PluginCheck.Security.DirectDB.UnescapedDBParameter`) flags any PHP variable interpolated in a SQL string, whatever its origin
+- A one-line `phpcs:ignore` does not cover a multi-line SQL string: the sniff reports on the line of the fragment, not on the line of the call
+- For an identifier that has to be dynamic, use the `%i` placeholder (WordPress 6.2+)
+- The only suppressions that belong on a query are `WordPress.DB.DirectDatabaseQuery.DirectQuery` and `.NoCaching`, which every direct query triggers. They are not security sniffs: add a cache, or justify them on the exact line of the `$wpdb` call
 
 ### Use WordPress functions when possible
 
@@ -756,12 +863,14 @@ move_uploaded_file( $_FILES['my_file']['tmp_name'], $destination );
 // NEVER DO THIS
 define( 'ALLOW_UNFILTERED_UPLOADS', true );
 
-// Instead, use upload_mimes filter for specific file types
+// Instead, use the upload_mimes filter for the specific types you need
 add_filter( 'upload_mimes', function( $mimes ) {
-    $mimes['svg'] = 'image/svg+xml';
+    $mimes['json'] = 'application/json';
     return $mimes;
 } );
 ```
+
+Do not enable SVG this way. An SVG is a document that can carry `<script>` and event handlers, so allowing the type hands stored XSS to everybody who can upload. If a plugin needs SVG, every file has to go through a maintained sanitizer on upload and the capability has to be restricted.
 
 ### Validate file types
 
@@ -807,7 +916,7 @@ function ayudawp_ajax_handler() {
     }
 
     // 3. Sanitize input
-    $data = sanitize_text_field( $_POST['data'] ?? '' );
+    $data = sanitize_text_field( wp_unslash( $_POST['data'] ?? '' ) );
 
     // 4. Process and respond
     wp_send_json_success( array( 'result' => $data ) );
@@ -886,8 +995,10 @@ private function is_verification_request() {
 }
 ```
 
+The tempting repair is to ask for more evidence: the action, the nonce of the verification form and a pending session stored server-side for that user. It looks airtight and it is not. **Version 1.2 of this skill showed the function below as the correct pattern. It is a bypass.**
+
 ```php
-// CORRECT: server-side state for THIS user, plus the form nonce
+// STILL WRONG: whoever knows the password already holds all three
 private function is_verification_request( $user = null ) {
     if ( 'my_2fa' !== ( $_REQUEST['action'] ?? '' ) ) {
         return false;
@@ -896,12 +1007,33 @@ private function is_verification_request( $user = null ) {
         || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'my_2fa_verify' ) ) {
         return false;
     }
-    $pending = $this->get_pending_user_id();   // stored server-side when the factor was issued
+    $pending = $this->get_pending_user_id();   // stored server-side when the password was accepted
     return $pending && ( ! $user instanceof WP_User || $pending === (int) $user->ID );
 }
 ```
 
-The same idea covers user agents, referers and any `X-Forwarded-*` header: they are claims, not evidence. If a plugin opens something because the client says it is Googlebot, it opens for everybody who says it.
+**Justify an authorization shortcut by listing who holds each value it depends on.** Here the nonce is printed on the form that is served to the visitor with the pending session, and the pending session is created by that same visitor when they submit the password. All three values are in the hands of the one attacker a second factor exists to stop: the one who has the password.
+
+On `wp-login.php` the hole does not show, because the custom action is routed to a `login_form_*` handler that ends the request before the `authenticate` filter can take the shortcut. Any other login form that calls `wp_signon()` (a shop's account page, a membership or LMS plugin) does reach the filter with those three values, and the login completes with no code. This was reproduced against a published release.
+
+The repair is to have no exemption that rests on what the request says about itself. The `authenticate` filter never lets through a user who needs a second factor because of an action, a nonce or a pending record: it records a pending verification server-side and returns a `WP_Error`. The verification form checks the code in its own `login_form_*` handler and issues the cookie itself with `wp_set_auth_cookie()`, without going back through `wp_authenticate()`, so nothing legitimate ever needed the shortcut. The one request that does pass without a code, a session whose cookie validates, is checked against the server and not claimed. A sketch of both halves, and the list of what a complete implementation still has to get right, are in `references/request-data-and-client-ip.md`.
+
+**Test every fix of a login bypass from a form that is not `wp-login.php`.** Shop, membership and LMS plugins bring their own login form, and that is where this one was open.
+
+The same idea covers user agents, referers and any `X-Forwarded-*` header: they are claims, not evidence. If a plugin opens something because the client says it is Googlebot, it opens for everybody who says it. **A value the caller chooses is good for logging and for display, never for deciding.**
+
+When an exemption is legitimate, scope it to what it exists for. A user-agent allowlist that spares a management service from the bad-bot rules spares it from those rules and from nothing else: in one audited firewall it returned before the IP blocklist and every pattern rule.
+
+**The client address is request data too**, and blocklists, allowlists, rate limits and lockouts all act on it:
+
+- One resolver for the whole plugin. Two ways of resolving the address means one good one and one exploitable one
+- A proxy header (`X-Forwarded-For`, `CF-Connecting-IP`, `X-Real-IP`) counts only when `REMOTE_ADDR` is a proxy you trust: a list the administrator declared or, with no list, your own network. A setting that says "this site is behind a proxy" is not enough, because anyone who reaches the origin directly forges the header
+- Read `X-Forwarded-For` from the right. The proxy appends the address it saw and keeps in front whatever the visitor sent, so the first entry is the one the visitor chose
+- Do not tell public from private addresses with the `filter_var()` range flags: what they cover changes between PHP versions
+
+And for any cache: the key of a stored copy comes from what the page is generated with (`is_ssl()`), never from a header the render ignores (`X-Forwarded-Proto`). A header that contradicts the render can only keep the request out of the cache.
+
+A tested resolver, the PHP version table, the cache case and the side effects of second-factor flows: `references/request-data-and-client-ip.md`.
 
 **And when a check fails inside a `login_form_*` handler, end the request.** A bare `return` hands control back to `wp-login.php`, which falls through to its default case and calls `wp_signon()`, completing the login the check was supposed to stop:
 
@@ -933,6 +1065,42 @@ register_rest_route( 'myplugin/v1', '/items', array(
 ) );
 ```
 
+For a route that takes an id, the `permission_callback` asks about that object, `current_user_can( 'edit_post', $request['id'] )`, for the same reason as in any other handler. And `'permission_callback' => '__return_true'` is a decision to make the route public: write down why next to it.
+
+### A registered meta is a REST write endpoint
+
+`register_post_meta()`, `register_term_meta()` and `register_meta()` with `show_in_rest` have no route of their own, so they are easy to leave out when listing entry points. Without a `sanitize_callback` the value is stored exactly as the request sent it, even when the classic meta box of the same plugin sanitizes. `auth_callback` decides who may write, not what is written.
+
+Name a sanitizer that exists, literally, for every key. A PHP internal such as `'trim'` or `'intval'` as the callback throws `ArgumentCountError` on every write on PHP 8, because core calls it with extra arguments. And `'type' => 'integer'` is enforced by the REST schema only: `update_post_meta()` stores whatever it is given. The full table and how to list the registrations: `references/registered-meta-and-core-filters.md`.
+
+## Secrets in copies, diffs and exports
+
+A secret does not change places unless somebody decides it. Before storing, exporting or emailing a copy of a file or of a setting, ask what it carries inside. An integrity scanner that kept the whole `wp-config.php` in an option, to show which lines had changed, put the database password and the salts within reach of anyone who could read the database or a backup of it.
+
+- Never keep `wp-config.php`, `.env`, `.htpasswd` or a database dump whole
+- Hash the complete file, redact both sides of a diff the same way, and check the redacted result against the values in force: if one survived, store nothing
+- Write "sensitive" lists the other way round, as the list of what may be shown. A list of secret names is never complete: a redaction keyed on names missed 10 of 15 real shapes
+
+The recipe and the shapes to test against: `references/secrets.md`.
+
+## Time comparisons
+
+Write and compare the timestamps of a table in one zone. `current_time( 'mysql' )` returns site time. `gmdate()` and `current_time( 'mysql', true )` return UTC. Mixing them breaks every protection that asks "has this expired yet?".
+
+In one audited plugin the last attempt was stored in site time and the lockout expiry in UTC for 73 releases. The login lockout only worked on sites set to UTC: ahead of UTC the lockout never looked active, behind it the attempts were never counted. No test saw it, because they all checked that the row was written and none that the next request was blocked.
+
+```php
+// WRONG: two zones in values that are compared with each other
+$attempted_at = current_time( 'mysql' );                         // site time
+$is_locked    = $row->lockout_until > gmdate( 'Y-m-d H:i:s' );   // UTC
+
+// CORRECT: UTC for everything that is compared, converted only for display
+$attempted_at = current_time( 'mysql', true );
+$is_locked    = $row->lockout_until > gmdate( 'Y-m-d H:i:s' );
+```
+
+A time-based protection is tested when it has been seen acting on the next request, on a site whose timezone is not UTC.
+
 ## Code review checklist
 
 ### Input handling
@@ -940,7 +1108,10 @@ register_rest_route( 'myplugin/v1', '/items', array(
 - [ ] All `$_POST`, `$_GET`, `$_REQUEST` values are sanitized
 - [ ] All `$_FILES` uploads use `wp_handle_upload()`
 - [ ] Database queries use `$wpdb->prepare()`
+- [ ] Every query is a complete literal: no SQL fragment travels in a variable
 - [ ] Type casting used where appropriate (`absint()`, `(int)`, etc.)
+- [ ] URLs are read with `esc_url_raw()` and paths and slugs with `wp_strip_all_tags()`, never with `sanitize_text_field()`, which deletes `%XX` octets
+- [ ] Every registered meta exposed in REST names a sanitizer that exists
 
 ### Output handling
 
@@ -948,6 +1119,8 @@ register_rest_route( 'myplugin/v1', '/items', array(
 - [ ] Correct escape function used for context (html/attr/url/js)
 - [ ] Escaping happens at output time (late escaping)
 - [ ] Translation functions are escaped (`esc_html__()` not `__()`)
+- [ ] No dynamic value reaches tag-name position without an allowlist
+- [ ] Values returned through `pre_get_document_title`, or hooked on `document_title` or `wp_title` at priority 10 or above, are escaped in the plugin
 
 ### Authentication & authorization
 
@@ -959,7 +1132,11 @@ register_rest_route( 'myplugin/v1', '/items', array(
 - [ ] Any object id arriving in the request is authorized **over that object** (`edit_post`, `edit_user`), not with a primitive capability
 - [ ] Anything shared by a multisite network (`wp-config.php`, root `.htaccess` or `robots.txt`, network options, dumps following `$wpdb->prefix`, user accounts) asks for `manage_network_options` or `manage_network_users`, not `manage_options`
 - [ ] No security decision rests on request data alone (`$_REQUEST['action']`, user agent, `X-Forwarded-*`)
+- [ ] Any shortcut that skips a check has been justified by listing who holds each value it depends on, and a login-bypass fix has been tested from a form that is not `wp-login.php`
 - [ ] A failed check inside a `login_form_*` handler ends the request with `exit`, never a bare `return`
+- [ ] The client IP comes from one resolver; a proxy header is honoured only when `REMOTE_ADDR` is a trusted proxy, and `X-Forwarded-For` is read from the right
+- [ ] No cache key or variant is chosen from a header the render ignores
+- [ ] Per-site settings do not act on network-wide user meta (sessions, application passwords, second-factor secrets)
 
 ### Output in JavaScript
 
@@ -975,6 +1152,14 @@ register_rest_route( 'myplugin/v1', '/items', array(
 - [ ] No timezone changes with `date_default_timezone_set()`
 - [ ] Uses WordPress HTTP API, not raw cURL
 - [ ] Uses `wp_enqueue_*` for scripts/styles
+- [ ] No copy of `wp-config.php`, `.env`, `.htpasswd` or a database dump is stored, exported or emailed whole
+- [ ] Timestamps that are compared are written in one zone, and time-based protections were seen acting on the next request on a site that is not in UTC
+
+### Before a release
+
+- [ ] The release gate was run at the depth the change calls for (`references/release-gate.md`)
+- [ ] Its figures are written down, together with what was not looked at
+- [ ] Each tool's output was compared with the previous release, and every new result explained
 
 ### wordpress.org review hardening
 
@@ -1006,6 +1191,14 @@ phpcs --standard=WordPress path/to/plugin
 
 The plugin review team rejects more aggressively than PHPCS alone. Their reviewers do not read comments that justify a `phpcs:ignore` — they treat the suppression itself as a red flag. Aim for **zero security-sniff suppressions** in the codebase you submit.
 
+### The automated security review
+
+Since June 2026 every release of a plugin hosted on wordpress.org also goes through an automated security review, by several AI models together with Jetpack Scan, during a cooldown period before it reaches the update API. A release with a high risk score is blocked from distribution and all committers get an email with the findings.
+
+A clean Plugin Check run predicts nothing about it: one looks at coding rules, the other analyses logic. It cannot be run before uploading and no suppression affects it, so the preparation is to ask its questions first: who holds each value a shortcut depends on, what is decided with data the caller chooses, and which secrets are being copied somewhere.
+
+When a blocked-release email arrives, sort the findings before touching anything. A signature match on a file that is the plugin's function is answered by replying to the email. A logic finding is almost always real: reproduce it and fix it. How to handle both, and how not to add signature surface by accident, is in `references/release-gate.md`.
+
 ### Security sniffs that MUST NOT be suppressed
 
 | Sniff | Real fix instead of `phpcs:ignore` |
@@ -1023,7 +1216,9 @@ Suppressing a sniff is asserting that the code is fine anyway. Nobody ever re-re
 - **No justification, no suppression.** Without the `--` explanation, a suppression is indistinguishable from carelessness. Audited plugin, real numbers: 60 security suppressions, 35 of them with no justification at all.
 - **A justification that claims something about another part of the code must cite it as `file:line`.** Comments like `-- nonce verified in handler` cannot be verified, and that exact comment was hiding a complete two-factor authentication bypass: the handler it referred to returned early on an invalid nonce and never verified anything. `-- nonce verified in class-foo.php:412` can be checked in seconds.
 - **Suppressions are inherited when code is copied**, and nobody re-reviews them at the destination. The one above was written once and travelled untouched through 70 releases.
-- **A `phpcs:disable` without its matching `phpcs:enable` silences the sniff to the end of the file.** Count both per file rather than assuming they balance.
+- **A `phpcs:disable` without its matching `phpcs:enable` silences the sniff to the end of the file, and that is never acceptable.** A database class opened with a five-sniff disable that covered its 1,552 lines. The justification was true the day it was written, and from then on every new query in that file was born without a net while the report stayed green. Count both directives per file, and mind two traps: a mention in prose inside a comment counts as a directive unless the pattern requires it to start the line, and a file can balance and still have a sniff switched off for good, because its `enable` lines close other sniffs. Look at what each one closes. A bare `// phpcs:enable` with no list re-enables everything.
+- **Before accepting a disable, check that it is needed.** Remove it and run the check. In that class twelve errors appeared, all in one migration block and all false positives. Bounding that block returned 1,500 lines to coverage, in two minutes that nobody had spent in years.
+- **Report the reach of suppressions, not their count.** A disable over 1,552 lines and one over 30 count the same. And before patching a file, look for open suppressions in it: if there are any, the patch is written without a net and the report will approve it anyway.
 - **And a clean Plugin Check run with suppressions in the tree is not security coverage.** It is the metric measuring its own silencer. Report the number of security suppressions next to the zero.
 
 ### Security sniffs that are safe to leave suppressed (with justification)
@@ -1046,13 +1241,15 @@ Keep the comment justification short and on the same line:
 
 ### Reading `$_SERVER` without nonce
 
-The reviewer does not require nonce for `$_SERVER` reads (`HTTP_USER_AGENT`, `REMOTE_ADDR`, `HTTP_X_FORWARDED_FOR`, etc.) because they are not user-controllable through a URL. Still sanitize and `wp_unslash` them and validate with `filter_var( $ip, FILTER_VALIDATE_IP )` for IP addresses:
+The reviewer does not require a nonce for `$_SERVER` reads (`HTTP_USER_AGENT`, `REMOTE_ADDR`, `HTTP_X_FORWARDED_FOR`, etc.), because a nonce protects against a forged request and says nothing about these values. Still `wp_unslash` and sanitize them:
 
 ```php
 $user_agent = isset( $_SERVER['HTTP_USER_AGENT'] )
     ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) )
     : '';
 ```
+
+That satisfies the sniff and says nothing about trust. `REMOTE_ADDR` is set by the web server from the connection. Every `HTTP_*` key is a request header, written by whoever sends the request: an `X-Forwarded-For` that passes `FILTER_VALIDATE_IP` is a well-formed address that the caller chose. Use those values to log and to display, never to decide who the visitor is or whether a check applies (see "Security decisions must not rest on request data").
 
 ### Email header injection on `Reply-To`
 
@@ -1078,4 +1275,5 @@ Never concatenate raw `$_POST` values into a header — CRLF injection can appen
 - [User Roles and Capabilities](https://developer.wordpress.org/apis/security/user-roles-and-capabilities/)
 - [Common Vulnerabilities](https://developer.wordpress.org/apis/security/common-vulnerabilities/)
 - [Plugin Review Team Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
+- [Automated Security Review](https://developer.wordpress.org/plugins/wordpress-org/automated-security-review/)
 - [WordPress Coding Standards](https://github.com/WordPress/WordPress-Coding-Standards)
